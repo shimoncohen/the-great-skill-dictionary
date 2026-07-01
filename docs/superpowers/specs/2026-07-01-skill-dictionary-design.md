@@ -10,7 +10,7 @@ A single hand-maintained `README.md` cataloguing agent skills (portable SKILL.md
 ## Decisions Made
 
 | Decision | Choice |
-|---|---|
+| --- | --- |
 | Structure | Hand-written single README (no generation tooling) |
 | Agent display | `✅ any` default for portable skills; short codes for exceptions/tested-on, with legend |
 | Cost display | Approximate raw token counts (`~` prefix), on-invoke + always-on, per-category "as of" date footnote |
@@ -29,8 +29,10 @@ A single hand-maintained `README.md` cataloguing agent skills (portable SKILL.md
 
 ## README Structure
 
-1. **Title + intro** — what this is; what an "agent skill" is (portable markdown instruction package loaded by coding agents)
-2. **Disclaimer** — token counts are approximations, marked `~`; each category table has an "as of" measurement date footnote
+1. **Title + intro** — what this is; what an "agent skill" is (portable markdown instruction package loaded by coding agents); link to the open [agentskills.io](https://agentskills.io/) spec, which explains the portability behind `✅ any`
+2. **Disclaimers** —
+   - token counts are approximations, marked `~`; each category table has an "as of" measurement date footnote
+   - security caution: skills are instructions injected into your agent's context (a prompt-injection surface) — audit a skill before installing it
 3. **Agent legend** — `CC` = Claude Code, `CX` = Codex, `GM` = Gemini CLI, `CP` = Copilot CLI, `✅ any` = plain portable markdown, works in any SKILL.md-compatible agent
 4. **Installing skills** — short per-agent instructions (paths/commands), written once
 5. **TOC** — clickable anchors to each category
@@ -39,7 +41,7 @@ A single hand-maintained `README.md` cataloguing agent skills (portable SKILL.md
    - 1–2 sentence category description
    - Table, rows sorted by name
    - Footnote: `*Token counts approximate, measured as of YYYY-MM.*`
-   - If empty: *"No skills catalogued yet — [contribute](#contributing)!"*
+   - If empty: placeholder text `No skills catalogued yet — [contribute](#contributing)!`
 
 ## Table Columns
 
@@ -49,7 +51,7 @@ A single hand-maintained `README.md` cataloguing agent skills (portable SKILL.md
 - **Agents:** `✅ any` or code list (`CC · CX`)
 - **Cost:** `~2.1k / ~150` — tokens loaded on invoke / tokens present every turn
 - **Maturity:** `stable` / `beta` / `experimental` / `archived`
-- **License:** SPDX short form (MIT, Apache-2.0, …)
+- **License:** SPDX short form (MIT, Apache-2.0, …). Skills that are visible on GitHub but not open source (e.g. Anthropic's pdf/docx/pptx/xlsx document skills — usable only within Claude) are marked `Source-available*` with a footnote explaining the restriction. Protects readers from assuming "on GitHub = free to use anywhere."
 - **Repo:** markdown link to source repository
 
 ## Categories (shown even when empty)
@@ -66,10 +68,18 @@ A single hand-maintained `README.md` cataloguing agent skills (portable SKILL.md
 10. ⚙️ Automation & Scheduling
 11. 🧩 Meta (skill/plugin/agent development)
 12. 🔍 Research
+13. 📄 Documents (pdf/docx/pptx/xlsx creation and editing)
+14. 💼 Business & Productivity (marketing, PM, comms — non-dev skills)
 
 ## Seed Content
 
-Populate from user's installed set and known public skills, e.g.: superpowers suite (brainstorming, TDD, systematic-debugging, writing-plans…), caveman suite, postman skills, ruflo plugin skills, skill-creator, graphify, karpathy-guidelines, deep-research. Always-on costs can be seeded from the session `/context` output (description tokens per skill); invoke costs estimated from SKILL.md sizes.
+Populate from user's installed set and known public skills:
+
+- User's installed set: superpowers suite (brainstorming, TDD, systematic-debugging, writing-plans…), caveman suite, postman skills, ruflo plugin skills, skill-creator, graphify, karpathy-guidelines, deep-research
+- anthropics/skills official 17 (skill-creator, mcp-builder, webapp-testing, frontend-design, pdf/docx/pptx/xlsx `Source-available*`, …) — Apache-2.0 except document skills
+- obra/superpowers (MIT), trailofbits/skills security pack (CC-BY-SA-4.0), vercel-labs/skills (find-skills, react-best-practices — MIT), laravel/boost (MIT)
+
+Always-on costs can be seeded from the session `/context` output (description tokens per skill); invoke costs estimated from SKILL.md sizes.
 
 ## CONTRIBUTING.md
 
