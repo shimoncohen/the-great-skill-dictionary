@@ -71,6 +71,19 @@ A single hand-maintained `README.md` cataloguing agent skills (portable SKILL.md
 13. 📄 Documents (pdf/docx/pptx/xlsx creation and editing)
 14. 💼 Business & Productivity (marketing, PM, comms — non-dev skills)
 
+## Skill Collections & Registries Section
+
+Placed after the category tables, before contributing. Purpose: further discovery and research — NOT a substitute for category rows. A skill that belongs to a collection still gets its own row in the appropriate category; this section only points at places to browse for more.
+
+Two small tables:
+
+1. **Collections** — multi-skill repos: | Repo | Description | License | Link |
+   - e.g. anthropics/skills (official), obra/superpowers, trailofbits/skills, vercel-labs/skills, alirezarezvani/claude-skills
+2. **Registries & lists** — searchable directories: | Name | Type (registry / awesome-list / marketplace) | Link |
+   - e.g. skills.sh, SkillsMP, SkillHub, heilcheng/awesome-agent-skills, travisvn/awesome-claude-skills
+
+No skill counts — they drift and add no decision value.
+
 ## Seed Content
 
 Populate from user's installed set and known public skills:
