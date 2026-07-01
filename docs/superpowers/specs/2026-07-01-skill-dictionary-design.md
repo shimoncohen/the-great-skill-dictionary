@@ -100,9 +100,26 @@ Always-on costs can be seeded from the session `/context` output (description to
 - Rules: alphabetical placement, `~` on token counts, how to measure (rough: words × 1.3), pick correct category, one row per skill
 - Note on updating the category "as of" date when costs are re-measured
 
+## Phase 2 — Contribution Automation (after README ships)
+
+Repo will be hosted on GitHub. Goal: contributors submit via issue form; automation fills in the rest — no human transcription mistakes.
+
+- **Issue template** (GitHub issue form YAML) asking only what can't be inferred:
+  - SKILL.md URL
+  - Category
+  - Agents tested on
+  - Maturity
+- **GitHub Action** triggered by submission label:
+  1. Fetch SKILL.md; parse frontmatter → name, description
+  2. Detect repo license
+  3. Compute token counts (always-on ≈ frontmatter description; on-invoke ≈ full SKILL.md)
+  4. Infer trigger type where possible (frontmatter/commands layout); fall back to form input
+  5. Insert row alphabetically in the chosen category table; update the category's "as of" date
+  6. Open a PR — **maintainer merge = human curation gate** (never auto-commit: spam and prompt-injection risk via unreviewed skill descriptions)
+- **Reuse:** same Action logic runs as a scheduled monthly job re-measuring token counts for all listed skills and PR-ing updates — solves cost staleness.
+
 ## Out of Scope (deferred ideas)
 
 - Data-backed generation (YAML per skill + script) — migration path if maintenance hurts
 - Per-agent reverse index
 - Cost ranking sections
-- Automated cost-measurement script
