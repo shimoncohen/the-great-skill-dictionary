@@ -60,6 +60,63 @@ class TestUrls(unittest.TestCase):
             skill_row.to_raw_url("https://evil.example.com/SKILL.md")
 
 
+class TestValidateSkillUrl(unittest.TestCase):
+    def test_valid_blob_url(self):
+        skill_row.validate_skill_url("https://github.com/owner/repo/blob/main/skills/x/SKILL.md")
+
+    def test_valid_raw_url(self):
+        skill_row.validate_skill_url("https://raw.githubusercontent.com/owner/repo/main/SKILL.md")
+
+    def assert_rejected(self, url):
+        with self.assertRaises(ValueError):
+            skill_row.validate_skill_url(url)
+
+    def test_rejects_other_domains(self):
+        self.assert_rejected("https://gitlab.com/o/r/blob/main/SKILL.md")
+        self.assert_rejected("https://evil.example.com/SKILL.md")
+
+    def test_rejects_lookalike_hosts(self):
+        self.assert_rejected("https://github.com.evil.com/o/r/blob/main/SKILL.md")
+        self.assert_rejected("https://notgithub.com/o/r/blob/main/SKILL.md")
+        self.assert_rejected("https://github.com@evil.com/o/r/blob/main/SKILL.md")
+
+    def test_rejects_http(self):
+        self.assert_rejected("http://github.com/o/r/blob/main/SKILL.md")
+
+    def test_accepts_any_markdown_filename_case_insensitive(self):
+        skill_row.validate_skill_url("https://github.com/o/r/blob/main/skills/x/skill.md")
+        skill_row.validate_skill_url("https://github.com/o/r/blob/main/my-skill.MD")
+        skill_row.validate_skill_url("https://github.com/o/r/blob/main/README.md")
+
+    def test_rejects_non_markdown_target(self):
+        self.assert_rejected("https://github.com/o/r/tree/main/skills/x")
+        self.assert_rejected("https://github.com/o/r/blob/main/SKILL.md.evil")
+        self.assert_rejected("https://github.com/o/r/blob/main/script.py")
+        self.assert_rejected("https://github.com/o/r/blob/SKILL.md")
+
+    def test_rejects_path_traversal_and_empty_segments(self):
+        self.assert_rejected("https://github.com/o/r/blob/main/../../x/SKILL.md")
+        self.assert_rejected("https://github.com/o/r/blob/main//x/SKILL.md")
+        self.assert_rejected("https://raw.githubusercontent.com/o/r/main/../SKILL.md")
+
+    def test_rejects_query_fragment_and_encoding_tricks(self):
+        self.assert_rejected("https://github.com/o/r/blob/main/SKILL.md?token=x")
+        self.assert_rejected("https://github.com/o/r/blob/main/SKILL.md#frag")
+        self.assert_rejected("https://github.com/o/r/blob/main/%2e%2e/SKILL.md")
+        self.assert_rejected("https://github.com/o/r/blob/main/a b/SKILL.md")
+
+    def test_rejects_bad_owner_or_repo(self):
+        self.assert_rejected("https://github.com/o?x/r/blob/main/SKILL.md")
+        self.assert_rejected("https://github.com/o/../blob/main/SKILL.md")
+        self.assert_rejected("https://github.com/o/.git/blob/main/SKILL.md")
+
+    def test_repo_web_url_any_markdown_name(self):
+        self.assertEqual(
+            skill_row.repo_web_url("https://github.com/o/r/blob/main/skills/x/my-skill.md"),
+            ("o/r", "https://github.com/o/r/tree/main/skills/x"),
+        )
+
+
 class TestIssueBody(unittest.TestCase):
     BODY = (
         "### SKILL.md URL\n\nhttps://github.com/o/r/blob/main/SKILL.md\n\n"

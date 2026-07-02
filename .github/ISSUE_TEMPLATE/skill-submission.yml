@@ -7,7 +7,7 @@ body:
     id: skill-url
     attributes:
       label: SKILL.md URL
-      description: Direct link to the skill's SKILL.md on GitHub (blob or raw URL).
+      description: Direct link to the skill's markdown file (usually SKILL.md) on github.com or raw.githubusercontent.com (blob or raw URL). Other hosts are rejected.
       placeholder: https://github.com/owner/repo/blob/main/skills/my-skill/SKILL.md
     validations:
       required: true
