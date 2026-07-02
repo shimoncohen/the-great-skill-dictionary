@@ -162,5 +162,83 @@ class TestRemeasureText(unittest.TestCase):
         self.assertEqual(out, SAMPLE_README)
 
 
+class TestCleanCell(unittest.TestCase):
+    def test_pipe_escaped_and_newline_collapsed(self):
+        self.assertEqual(skill_row.clean_cell("a |\nb"), "a \\| b")
+
+    def test_strips_leading_trailing_whitespace(self):
+        self.assertEqual(skill_row.clean_cell("  hello  "), "hello")
+
+    def test_multiple_spaces_collapsed(self):
+        self.assertEqual(skill_row.clean_cell("a  b   c"), "a b c")
+
+
+class TestBuildRowCleaning(unittest.TestCase):
+    def test_description_cleaned(self):
+        row = skill_row.build_row(
+            "skill", "x | y\nz", "auto", "✅ any", "~1k / ~10", "stable", "MIT",
+            "o/r", "https://github.com/o/r",
+        )
+        self.assertIn("x \\| y z", row)
+
+    def test_non_github_url_raises(self):
+        with self.assertRaises(ValueError):
+            skill_row.build_row(
+                "skill", "desc", "auto", "✅ any", "~1k / ~10", "stable", "MIT",
+                "o/r", "https://evil.com/o/r",
+            )
+
+
+class TestFrontmatterBlockScalar(unittest.TestCase):
+    def test_folded_scalar_description(self):
+        text = "---\nname: x\ndescription: >-\n  line one\n  line two\n---\nbody"
+        fm = skill_row.parse_frontmatter(text)
+        self.assertEqual(fm["description"], "line one line two")
+
+
+class TestInsertRowCrossCategoryDuplicate(unittest.TestCase):
+    def test_cross_category_duplicate_raises(self):
+        # "alpha" already exists in "🧪 Testing"; inserting into "🔍 Research" must also raise
+        row = "| alpha | A | auto | ✅ any | ~1k / ~10 | stable | MIT | [r](https://github.com/a/r) |"
+        with self.assertRaises(ValueError):
+            skill_row.insert_row(SAMPLE_README, "🔍 Research", row, "alpha", "2026-08")
+
+
+class TestFormatTokensSmall(unittest.TestCase):
+    def test_format_tokens_3_returns_ten(self):
+        self.assertEqual(skill_row.format_tokens(3), "~10")
+
+
+class TestValidateFields(unittest.TestCase):
+    def test_bad_category_raises(self):
+        with self.assertRaises(ValueError):
+            skill_row.validate_fields("🚀 Nope", "CC", "stable", "auto")
+
+    def test_bad_agent_raises(self):
+        with self.assertRaises(ValueError):
+            skill_row.validate_fields("🧪 Testing", "ZZ", "stable", "auto")
+
+    def test_bad_maturity_raises(self):
+        with self.assertRaises(ValueError):
+            skill_row.validate_fields("🧪 Testing", "CC", "legacy", "auto")
+
+    def test_bad_trigger_raises(self):
+        with self.assertRaises(ValueError):
+            skill_row.validate_fields("🧪 Testing", "CC", "stable", "weekly")
+
+    def test_valid_fields_no_raise(self):
+        skill_row.validate_fields("🧪 Testing", "CC, CX", "stable", "auto")
+
+
+class TestRemeasureMissingCategory(unittest.TestCase):
+    def test_missing_category_no_crash(self):
+        """Registry entry pointing to non-existent category must not raise."""
+        fetched = {"https://raw.x/SKILL.md": "---\nname: alpha\ndescription: A\n---\n" + ("w " * 2000)}
+        registry = {"alpha": {"url": "https://raw.x/SKILL.md", "category": "🚀 Nonexistent"}}
+        # Must not raise even though the category heading does not exist in SAMPLE_README
+        out = skill_row.remeasure_text(SAMPLE_README, registry, "2026-09", fetcher=fetched.get)
+        self.assertTrue(any(l.startswith("| alpha |") for l in out.splitlines()))
+
+
 if __name__ == "__main__":
     unittest.main()

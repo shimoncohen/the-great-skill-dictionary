@@ -19,16 +19,48 @@ TABLE_HEADER = (
     "| --- | --- | --- | --- | --- | --- | --- | --- |"
 )
 
+CATEGORIES = {
+    "🪙 Token Reduction", "🛠️ Engineering Workflow", "🧪 Testing",
+    "🎨 Design & Frontend", "🌐 Web Development", "📚 Documentation",
+    "🔒 Security", "🔌 API & Integration", "🧠 Memory & Knowledge",
+    "⚙️ Automation & Scheduling", "🧩 Meta", "🔍 Research",
+    "📄 Documents", "💼 Business & Productivity",
+}
+AGENT_CODES = {"✅ any", "CC", "CX", "GM", "CP"}
+MATURITIES = {"stable", "beta", "experimental", "archived"}
+TRIGGERS = {"auto", "manual", "always-on"}
+
+_BLOCK_SCALAR_INDICATORS = {">", ">-", ">+", "|", "|-", "|+", ""}
+
+
+def clean_cell(s):
+    """Make untrusted text safe inside a markdown table cell."""
+    return re.sub(r"\s+", " ", s).replace("|", "\\|").strip()
+
 
 def parse_frontmatter(text):
     m = re.match(r"\A---\s*\n(.*?)\n---\s*\n", text, re.S)
     if not m:
         raise ValueError("SKILL.md has no YAML frontmatter")
     fm = {}
-    for line in m.group(1).splitlines():
+    lines = m.group(1).splitlines()
+    i = 0
+    while i < len(lines):
+        line = lines[i]
         if ":" in line and not line.startswith((" ", "\t", "#")):
             key, _, value = line.partition(":")
-            fm[key.strip()] = value.strip().strip("\"'")
+            value = value.strip().strip("\"'")
+            if value in _BLOCK_SCALAR_INDICATORS:
+                # Consume following more-indented lines as the scalar value
+                block_lines = []
+                i += 1
+                while i < len(lines) and lines[i].startswith((" ", "\t")):
+                    block_lines.append(lines[i].strip())
+                    i += 1
+                fm[key.strip()] = " ".join(block_lines)
+                continue
+            fm[key.strip()] = value
+        i += 1
     if "name" not in fm or "description" not in fm:
         raise ValueError("frontmatter missing name or description")
     return fm
@@ -39,6 +71,8 @@ def estimate_tokens(text):
 
 
 def format_tokens(n):
+    if n < 100:
+        return f"~{max(10, round(n, -1))}"
     if n < 1000:
         return f"~{round(n, -1)}"
     if n < 10000:
@@ -87,10 +121,10 @@ def agents_cell(raw):
 def fetch(url):
     req = urllib.request.Request(url, headers={"User-Agent": "skill-dictionary-bot"})
     token = os.environ.get("GITHUB_TOKEN")
-    if token and "api.github.com" in url:
+    if token and url.startswith("https://api.github.com/"):
         req.add_header("Authorization", f"Bearer {token}")
     with urllib.request.urlopen(req, timeout=30) as resp:
-        return resp.read().decode("utf-8")
+        return resp.read(2_000_000).decode("utf-8")
 
 
 def detect_license(owner_repo):
@@ -114,9 +148,10 @@ def _split_section(text, category):
 
 
 def insert_row(text, category, row, name, date):
-    before, section, after = _split_section(text, category)
-    if any(l.startswith(f"| {name} |") for l in section.splitlines()):
+    # Global duplicate check across the entire README text
+    if any(l.startswith(f"| {name} |") for l in text.splitlines()):
         raise ValueError(f"skill already listed: {name}")
+    before, section, after = _split_section(text, category)
     footnote = f"*Token counts approximate, measured as of {date}.*"
     if PLACEHOLDER in section:
         section = section.replace(
@@ -141,8 +176,14 @@ def insert_row(text, category, row, name, date):
 
 
 def build_row(name, description, trigger, agents, cost, maturity, license_id, repo_name, repo_url):
-    return (f"| {name} | {description} | {trigger} | {agents} | {cost} "
-            f"| {maturity} | {license_id} | [{repo_name}]({repo_url}) |")
+    if not repo_url.startswith("https://github.com/"):
+        raise ValueError(f"repo URL must start with https://github.com/: {repo_url}")
+    return (
+        f"| {clean_cell(name)} | {clean_cell(description)} | {clean_cell(trigger)} "
+        f"| {clean_cell(agents)} | {cost} "
+        f"| {clean_cell(maturity)} | {clean_cell(license_id)} "
+        f"| [{clean_cell(repo_name)}]({repo_url}) |"
+    )
 
 
 def replace_cost_cell(row, new_cost):
@@ -169,12 +210,26 @@ def _save_sources(registry):
         f.write("\n")
 
 
+def validate_fields(category, agents_raw, maturity, trigger):
+    """Validate enum fields; raise ValueError on any mismatch."""
+    if category not in CATEGORIES:
+        raise ValueError(f"unknown category: {category}")
+    for agent in [a.strip() for a in agents_raw.split(",") if a.strip()]:
+        if agent not in AGENT_CODES:
+            raise ValueError(f"unknown agent code: {agent}")
+    if maturity not in MATURITIES:
+        raise ValueError(f"unknown maturity: {maturity}")
+    if trigger not in TRIGGERS:
+        raise ValueError(f"unknown trigger: {trigger}")
+
+
 def cmd_add(issue_body_file, date):
     fields = parse_issue_body(open(issue_body_file).read())
     url = fields["SKILL.md URL"]
     category = fields["Category"]
     trigger_key = next((k for k in fields if k.startswith("Trigger")), None)
     trigger = fields.get(trigger_key) or "auto"
+    validate_fields(category, fields["Agents tested"], fields["Maturity"], trigger)
     raw_url = to_raw_url(url.strip())
     skill_md = fetch(raw_url)
     fm = parse_frontmatter(skill_md)
@@ -221,9 +276,12 @@ def remeasure_text(text, registry, date, fetcher=None):
                     changed = True
         if changed:
             text = "".join(lines)
-            before, section, after = _split_section(text, meta["category"])
-            footnote = f"*Token counts approximate, measured as of {date}.*"
-            text = before + FOOTNOTE_RE.sub(footnote, section) + after
+            try:
+                before, section, after = _split_section(text, meta["category"])
+                footnote = f"*Token counts approximate, measured as of {date}.*"
+                text = before + FOOTNOTE_RE.sub(footnote, section) + after
+            except ValueError:
+                print(f"skip (footnote update, category not found): {name}", file=sys.stderr)
             print(f"remeasured: {name} -> {cost}")
     return text
 
