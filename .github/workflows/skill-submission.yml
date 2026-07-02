@@ -71,9 +71,13 @@ jobs:
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
         with:
           branch: skill-submission/issue-${{ github.event.issue.number }}
+          assignees: ${{ github.event.issue.user.login }}
           title: "Add skill from #${{ github.event.issue.number }}"
+          author: ${{ github.event.issue.user.login }} <${{ github.event.issue.user.id }}+${{ github.event.issue.user.login }}@users.noreply.github.com>
           commit-message: |
             Add skill from issue #${{ github.event.issue.number }}
+
+            Co-authored-by: ${{ github.event.issue.user.login }} <${{ github.event.issue.user.id }}+${{ github.event.issue.user.login }}@users.noreply.github.com>
           body: |
             Automated skill row for #${{ github.event.issue.number }}.
             Inferred: name, description, license, token costs. Review before merging.
