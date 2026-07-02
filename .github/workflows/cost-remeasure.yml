@@ -1,0 +1,34 @@
+name: Monthly cost re-measure
+on:
+  schedule:
+    - cron: "17 4 1 * *"   # 04:17 UTC on the 1st of each month
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  remeasure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run tests
+        run: python3 -m unittest tests.test_skill_row
+
+      - name: Re-measure token costs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/skill_row.py remeasure --date "$(date -u +%Y-%m)"
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: cost-remeasure
+          title: "Monthly token-cost re-measure"
+          commit-message: Re-measure skill token costs
+          body: |
+            Automated monthly refresh of token counts for skills recorded in
+            `.github/skill-sources.json`. Review before merging.
+          add-paths: README.md
