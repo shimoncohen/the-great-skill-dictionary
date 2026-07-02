@@ -61,7 +61,7 @@ def parse_frontmatter(text):
                 continue
             fm[key.strip()] = value
         i += 1
-    if "name" not in fm or "description" not in fm:
+    if not fm.get("name") or not fm.get("description"):
         raise ValueError("frontmatter missing name or description")
     return fm
 
@@ -233,20 +233,21 @@ def cmd_add(issue_body_file, date):
     raw_url = to_raw_url(url.strip())
     skill_md = fetch(raw_url)
     fm = parse_frontmatter(skill_md)
+    name = clean_cell(fm["name"])  # normalize once; row, dup check, and registry all use the same form
     owner_repo, dir_url = repo_web_url(raw_url)
     cost = cost_cell(estimate_tokens(skill_md), estimate_tokens(fm["name"] + " " + fm["description"]))
     row = build_row(
-        fm["name"], fm["description"].rstrip("."), trigger,
+        name, fm["description"].rstrip("."), trigger,
         agents_cell(fields["Agents tested"]), cost, fields["Maturity"],
         detect_license(owner_repo), owner_repo, dir_url,
     )
     text = open(README).read()
-    new_text = insert_row(text, category, row, fm["name"], date)
+    new_text = insert_row(text, category, row, name, date)
     open(README, "w").write(new_text)
     registry = _load_sources()
-    update_sources(registry, fm["name"], raw_url, category)
+    update_sources(registry, name, raw_url, category)
     _save_sources(registry)
-    print(f"added: {fm['name']} -> {category}")
+    print(f"added: {name} -> {category}")
 
 
 def remeasure_text(text, registry, date, fetcher=None):
