@@ -143,3 +143,66 @@ def insert_row(text, category, row, name, date):
 def build_row(name, description, trigger, agents, cost, maturity, license_id, repo_name, repo_url):
     return (f"| {name} | {description} | {trigger} | {agents} | {cost} "
             f"| {maturity} | {license_id} | [{repo_name}]({repo_url}) |")
+
+
+def replace_cost_cell(row, new_cost):
+    cells = row.split("|")
+    cells[5] = f" {new_cost} "
+    return "|".join(cells)
+
+
+def update_sources(registry, name, raw_url, category):
+    registry[name] = {"url": raw_url, "category": category}
+
+
+def _load_sources():
+    if os.path.exists(SOURCES):
+        with open(SOURCES) as f:
+            return json.load(f)
+    return {}
+
+
+def _save_sources(registry):
+    os.makedirs(os.path.dirname(SOURCES), exist_ok=True)
+    with open(SOURCES, "w") as f:
+        json.dump(registry, f, indent=2, ensure_ascii=False, sort_keys=True)
+        f.write("\n")
+
+
+def cmd_add(issue_body_file, date):
+    fields = parse_issue_body(open(issue_body_file).read())
+    url = fields["SKILL.md URL"]
+    category = fields["Category"]
+    trigger_key = next((k for k in fields if k.startswith("Trigger")), None)
+    trigger = fields.get(trigger_key) or "auto"
+    raw_url = to_raw_url(url.strip())
+    skill_md = fetch(raw_url)
+    fm = parse_frontmatter(skill_md)
+    owner_repo, dir_url = repo_web_url(raw_url)
+    cost = cost_cell(estimate_tokens(skill_md), estimate_tokens(fm["name"] + " " + fm["description"]))
+    row = build_row(
+        fm["name"], fm["description"].rstrip("."), trigger,
+        agents_cell(fields["Agents tested"]), cost, fields["Maturity"],
+        detect_license(owner_repo), owner_repo, dir_url,
+    )
+    text = open(README).read()
+    new_text = insert_row(text, category, row, fm["name"], date)
+    open(README, "w").write(new_text)
+    registry = _load_sources()
+    update_sources(registry, fm["name"], raw_url, category)
+    _save_sources(registry)
+    print(f"added: {fm['name']} -> {category}")
+
+
+def main(argv):
+    args = dict(zip(argv[2::2], argv[3::2]))
+    if argv[1] == "add":
+        cmd_add(args["--issue-body"], args["--date"])
+    elif argv[1] == "remeasure":
+        cmd_remeasure(args["--date"])
+    else:
+        raise SystemExit(f"unknown command: {argv[1]}")
+
+
+if __name__ == "__main__":
+    main(sys.argv)

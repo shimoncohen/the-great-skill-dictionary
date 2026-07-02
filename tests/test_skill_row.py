@@ -135,5 +135,17 @@ class TestInsertRow(unittest.TestCase):
             skill_row.insert_row(SAMPLE_README, "🚀 Nope", self.ROW, "mid", "2026-08")
 
 
+class TestRegistryAndReplace(unittest.TestCase):
+    def test_replace_cost_cell(self):
+        row = "| alpha | A | auto | ✅ any | ~1k / ~50 | stable | MIT | [r](u) |"
+        out = skill_row.replace_cost_cell(row, "~3k / ~90")
+        self.assertEqual(out, "| alpha | A | auto | ✅ any | ~3k / ~90 | stable | MIT | [r](u) |")
+
+    def test_update_sources(self):
+        reg = {}
+        skill_row.update_sources(reg, "my-skill", "https://raw.githubusercontent.com/o/r/main/SKILL.md", "🧪 Testing")
+        self.assertEqual(reg["my-skill"]["category"], "🧪 Testing")
+
+
 if __name__ == "__main__":
     unittest.main()
