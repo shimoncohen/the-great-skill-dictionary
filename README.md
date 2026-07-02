@@ -44,7 +44,7 @@ Check each skill's repository for skill-specific install notes.
 - [🔒 Security](#-security)
 - [🔌 API & Integration](#-api--integration)
 - [🧠 Memory & Knowledge](#-memory--knowledge)
-- [⚙️ Automation & Scheduling](#%EF%B8%8F-automation--scheduling)
+- [⚙️ Automation & Scheduling](#%E2%9A%99%EF%B8%8F-automation--scheduling)
 - [🧩 Meta](#-meta)
 - [🔍 Research](#-research)
 - [📄 Documents](#-documents)
@@ -193,3 +193,31 @@ Non-dev skills: marketing, product management, comms, and brand work.
 | internal-comms | Drafts status reports, newsletters, and FAQs in a consistent internal voice | auto | ✅ any | ~1.5k / ~70 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/internal-comms) |
 
 *Token counts approximate, measured as of 2026-07.*
+
+## 📦 Skill Collections & Registries
+
+For further discovery and research. Skills found here still get their own row in a category above once curated — these are places to browse for more.
+
+### Collections
+
+| Repo | Description | License | Link |
+| --- | --- | --- | --- |
+| alirezarezvani/claude-skills | Large community skill pack, explicitly multi-agent portable | — | [GitHub](https://github.com/alirezarezvani/claude-skills) |
+| anthropics/skills | Anthropic's official example skills and skill spec template | Apache-2.0 / Source-available† | [GitHub](https://github.com/anthropics/skills) |
+| obra/superpowers | Software-engineering methodology pack: TDD, debugging, planning workflows | MIT | [GitHub](https://github.com/obra/superpowers) |
+| trailofbits/skills | Security-audit skills from Trail of Bits | CC-BY-SA-4.0 | [GitHub](https://github.com/trailofbits/skills) |
+| vercel-labs/skills | Vercel's skill collection and registry CLI | MIT | [GitHub](https://github.com/vercel-labs/skills) |
+
+### Registries & lists
+
+| Name | Type | Link |
+| --- | --- | --- |
+| awesome-agent-skills (heilcheng) | awesome-list | [GitHub](https://github.com/heilcheng/awesome-agent-skills) |
+| awesome-claude-skills (travisvn) | awesome-list | [GitHub](https://github.com/travisvn/awesome-claude-skills) |
+| SkillHub | marketplace | [skillhub.club](https://www.skillhub.club/) |
+| SkillsMP | registry | [skillsmp.com](https://skillsmp.com/) |
+| skills.sh | registry | [skills.sh](https://www.skills.sh/) |
+
+## Contributing
+
+Want to add a skill? See [CONTRIBUTING.md](CONTRIBUTING.md) for the row template and rules. Automated submission via GitHub issue form is planned (phase 2).
