@@ -147,5 +147,20 @@ class TestRegistryAndReplace(unittest.TestCase):
         self.assertEqual(reg["my-skill"]["category"], "🧪 Testing")
 
 
+class TestRemeasureText(unittest.TestCase):
+    def test_remeasure_updates_row_and_date(self):
+        fetched = {"https://raw.x/SKILL.md": "---\nname: alpha\ndescription: A\n---\n" + ("w " * 2000)}
+        registry = {"alpha": {"url": "https://raw.x/SKILL.md", "category": "🧪 Testing"}}
+        out = skill_row.remeasure_text(SAMPLE_README, registry, "2026-09", fetcher=fetched.get)
+        row = next(l for l in out.splitlines() if l.startswith("| alpha |"))
+        self.assertIn("~2.6k", row)
+        self.assertIn("measured as of 2026-09", out)
+
+    def test_missing_skill_skipped(self):
+        registry = {"ghost": {"url": "https://raw.x/S.md", "category": "🧪 Testing"}}
+        out = skill_row.remeasure_text(SAMPLE_README, registry, "2026-09", fetcher=lambda u: None)
+        self.assertEqual(out, SAMPLE_README)
+
+
 if __name__ == "__main__":
     unittest.main()

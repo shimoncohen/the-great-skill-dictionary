@@ -194,6 +194,51 @@ def cmd_add(issue_body_file, date):
     print(f"added: {fm['name']} -> {category}")
 
 
+def remeasure_text(text, registry, date, fetcher=None):
+    fetcher = fetcher or fetch
+    for name, meta in sorted(registry.items()):
+        skill_md = None
+        try:
+            skill_md = fetcher(meta["url"])
+        except Exception:
+            pass
+        if not skill_md:
+            print(f"skip (fetch failed): {name}", file=sys.stderr)
+            continue
+        try:
+            fm = parse_frontmatter(skill_md)
+        except ValueError:
+            print(f"skip (bad frontmatter): {name}", file=sys.stderr)
+            continue
+        cost = cost_cell(estimate_tokens(skill_md), estimate_tokens(fm["name"] + " " + fm["description"]))
+        changed = False
+        lines = text.splitlines(True)
+        for i, line in enumerate(lines):
+            if line.startswith(f"| {name} |"):
+                new_line = replace_cost_cell(line.rstrip("\n"), cost) + "\n"
+                if new_line != line:
+                    lines[i] = new_line
+                    changed = True
+        if changed:
+            text = "".join(lines)
+            before, section, after = _split_section(text, meta["category"])
+            footnote = f"*Token counts approximate, measured as of {date}.*"
+            text = before + FOOTNOTE_RE.sub(footnote, section) + after
+            print(f"remeasured: {name} -> {cost}")
+    return text
+
+
+def cmd_remeasure(date):
+    registry = _load_sources()
+    if not registry:
+        print("no recorded sources; nothing to do")
+        return
+    text = open(README).read()
+    new_text = remeasure_text(text, registry, date)
+    if new_text != text:
+        open(README, "w").write(new_text)
+
+
 def main(argv):
     args = dict(zip(argv[2::2], argv[3::2]))
     if argv[1] == "add":
