@@ -123,8 +123,8 @@ Auditing, vulnerability hunting, and secure-coding review.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| differential-review | Security-focused review of diffs: hunts vulnerabilities introduced by a change | auto | CC · CX | ~1.3k / ~50 | stable | CC-BY-SA-4.0 | [trailofbits/skills](https://github.com/trailofbits/skills) |
-| semgrep-rule-writing | Authors and refines Semgrep static-analysis rules | auto | CC · CX | ~1.8k / ~90 | stable | CC-BY-SA-4.0 | [trailofbits/skills](https://github.com/trailofbits/skills) |
+| differential-review | Security-focused review of diffs: hunts vulnerabilities introduced by a change | auto | CC · CX | ~1.3k / ~50 | stable | CC-BY-SA-4.0 | [trailofbits/skills](https://github.com/trailofbits/skills/tree/main/plugins/differential-review/skills/differential-review) |
+| semgrep | Authors and refines Semgrep static-analysis rules | auto | CC · CX | ~1.8k / ~90 | stable | CC-BY-SA-4.0 | [trailofbits/skills](https://github.com/trailofbits/skills/tree/main/plugins/static-analysis/skills/semgrep) |
 
 *Token counts approximate, measured as of 2026-07.*
 

@@ -55,7 +55,7 @@
     "category": "🎨 Design & Frontend",
     "url": "https://raw.githubusercontent.com/vercel-labs/agent-skills/main/skills/react-best-practices/SKILL.md"
   },
-  "semgrep-rule-writing": {
+  "semgrep": {
     "category": "🔒 Security",
     "url": "https://raw.githubusercontent.com/trailofbits/skills/main/plugins/static-analysis/skills/semgrep/SKILL.md"
   },
