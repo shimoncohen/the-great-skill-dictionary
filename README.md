@@ -31,7 +31,7 @@ Install is per-agent, not per-skill — a skill is just a folder containing `SKI
 - **Copilot CLI:** copy to `~/.copilot/skills/<name>/`.
 - **Any spec-compatible agent:** see the [Agent Skills spec](https://agentskills.io/) for your agent's skill directory.
 
-Check each skill's repository for skill-specific install notes.
+Directory conventions may change between agent versions — check your agent's docs, and each skill's repository for skill-specific install notes.
 
 ## Categories
 
@@ -217,8 +217,8 @@ For further discovery and research. Skills found here are candidates for their o
 | awesome-agent-skills (heilcheng) | awesome-list | [GitHub](https://github.com/heilcheng/awesome-agent-skills) |
 | awesome-claude-skills (travisvn) | awesome-list | [GitHub](https://github.com/travisvn/awesome-claude-skills) |
 | SkillHub | marketplace | [skillhub.club](https://www.skillhub.club/) |
-| SkillsMP | registry | [skillsmp.com](https://skillsmp.com/) |
 | skills.sh | registry | [skills.sh](https://www.skills.sh/) |
+| SkillsMP | registry | [skillsmp.com](https://skillsmp.com/) |
 
 ## Contributing
 
