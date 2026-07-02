@@ -58,7 +58,7 @@ Skills that cut token usage — compressed communication styles, output trimming
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| caveman | Compressed replies, ~75% fewer output tokens, full technical accuracy kept | manual | ✅ any | ~2k / ~140 | stable | MIT | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) |
+| caveman | Compressed replies, ~75% fewer output tokens, full technical accuracy kept | manual | ✅ any | ~880 / ~70 | stable | MIT | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) |
 
 *Token counts approximate, measured as of 2026-07.*
 
@@ -68,11 +68,11 @@ Process discipline for day-to-day development: brainstorming, planning, TDD, deb
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| brainstorming | Turns ideas into validated designs through collaborative dialogue before any code | auto | ✅ any | ~1.5k / ~80 | stable | MIT | [obra/superpowers](https://github.com/obra/superpowers) |
-| karpathy-guidelines | Behavioral guardrails against common LLM coding mistakes: overcomplication, non-surgical edits | auto | ✅ any | ~1k / ~90 | stable | — | [andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) |
-| systematic-debugging | Root-cause-first debugging discipline; forbids guess-and-check fixes | auto | ✅ any | ~1.5k / ~40 | stable | MIT | [obra/superpowers](https://github.com/obra/superpowers) |
-| test-driven-development | Red-green-refactor loop enforcement for every feature and bugfix | auto | ✅ any | ~2k / ~40 | stable | MIT | [obra/superpowers](https://github.com/obra/superpowers) |
-| writing-plans | Produces bite-sized, zero-context implementation plans from specs | auto | ✅ any | ~1.5k / ~40 | stable | MIT | [obra/superpowers](https://github.com/obra/superpowers) |
+| brainstorming | Turns ideas into validated designs through collaborative dialogue before any code | auto | ✅ any | ~2k / ~40 | stable | MIT | [obra/superpowers](https://github.com/obra/superpowers) |
+| karpathy-guidelines | Behavioral guardrails against common LLM coding mistakes: overcomplication, non-surgical edits | auto | ✅ any | ~480 / ~40 | stable | — | [andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) |
+| systematic-debugging | Root-cause-first debugging discipline; forbids guess-and-check fixes | auto | ✅ any | ~2k / ~20 | stable | MIT | [obra/superpowers](https://github.com/obra/superpowers) |
+| test-driven-development | Red-green-refactor loop enforcement for every feature and bugfix | auto | ✅ any | ~1.9k / ~20 | stable | MIT | [obra/superpowers](https://github.com/obra/superpowers) |
+| writing-plans | Produces bite-sized, zero-context implementation plans from specs | auto | ✅ any | ~1.4k / ~20 | stable | MIT | [obra/superpowers](https://github.com/obra/superpowers) |
 
 *Token counts approximate, measured as of 2026-07.*
 
@@ -82,7 +82,7 @@ Test authoring, coverage analysis, and app-level verification.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| webapp-testing | Drives and tests local web apps with Playwright | auto | CC | ~2.5k / ~60 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/webapp-testing) |
+| webapp-testing | Drives and tests local web apps with Playwright | auto | CC | ~650 / ~30 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/webapp-testing) |
 
 *Token counts approximate, measured as of 2026-07.*
 
@@ -92,8 +92,8 @@ Visual design quality, UI component work, and frontend best practices.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| frontend-design | Produces distinctive, production-grade frontend interfaces instead of generic AI styling | auto | ✅ any | ~1.5k / ~70 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/frontend-design) |
-| react-best-practices | React and Next.js performance patterns from the Vercel team | auto | ✅ any | ~3k / ~60 | stable | MIT | [vercel-labs/skills](https://github.com/vercel-labs/skills) |
+| frontend-design | Produces distinctive, production-grade frontend interfaces instead of generic AI styling | auto | ✅ any | ~1.7k / ~40 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/frontend-design) |
+| react-best-practices | React and Next.js performance patterns from the Vercel team | auto | ✅ any | ~1.2k / ~60 | stable | MIT | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices) |
 
 *Token counts approximate, measured as of 2026-07.*
 
@@ -103,7 +103,7 @@ Building and shipping web applications end to end.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| web-artifacts-builder | Generates code for elaborate claude.ai artifacts using React and Tailwind | auto | CC | ~2k / ~70 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/web-artifacts-builder) |
+| web-artifacts-builder | Generates code for elaborate claude.ai artifacts using React and Tailwind | auto | CC | ~580 / ~50 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/web-artifacts-builder) |
 
 *Token counts approximate, measured as of 2026-07.*
 
@@ -113,7 +113,7 @@ Writing, generating, and maintaining docs.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| doc-coauthoring | Structured doc co-writing workflow: context gathering, drafting, reader-testing | auto | ✅ any | ~2k / ~90 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/doc-coauthoring) |
+| doc-coauthoring | Structured doc co-writing workflow: context gathering, drafting, reader-testing | auto | ✅ any | ~3.2k / ~80 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/doc-coauthoring) |
 
 *Token counts approximate, measured as of 2026-07.*
 
@@ -123,8 +123,8 @@ Auditing, vulnerability hunting, and secure-coding review.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| differential-review | Security-focused review of diffs: hunts vulnerabilities introduced by a change | auto | CC · CX | ~2k / ~60 | stable | CC-BY-SA-4.0 | [trailofbits/skills](https://github.com/trailofbits/skills) |
-| semgrep-rule-writing | Authors and refines Semgrep static-analysis rules | auto | CC · CX | ~2.5k / ~60 | stable | CC-BY-SA-4.0 | [trailofbits/skills](https://github.com/trailofbits/skills) |
+| differential-review | Security-focused review of diffs: hunts vulnerabilities introduced by a change | auto | CC · CX | ~1.3k / ~50 | stable | CC-BY-SA-4.0 | [trailofbits/skills](https://github.com/trailofbits/skills) |
+| semgrep-rule-writing | Authors and refines Semgrep static-analysis rules | auto | CC · CX | ~1.8k / ~90 | stable | CC-BY-SA-4.0 | [trailofbits/skills](https://github.com/trailofbits/skills) |
 
 *Token counts approximate, measured as of 2026-07.*
 
@@ -134,7 +134,7 @@ APIs, MCP servers, and service integration.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| mcp-builder | Guides building MCP servers in Python or TypeScript | auto | ✅ any | ~3k / ~70 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/mcp-builder) |
+| mcp-builder | Guides building MCP servers in Python or TypeScript | auto | ✅ any | ~1.5k / ~50 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/mcp-builder) |
 
 *Token counts approximate, measured as of 2026-07.*
 
@@ -156,9 +156,9 @@ Skills for making skills: skill/plugin/agent development and skill discovery.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| find-skills | Discovers and installs skills from the open ecosystem when you ask "how do I X" | auto | ✅ any | ~1k / ~110 | stable | MIT | [vercel-labs/skills](https://github.com/vercel-labs/skills/tree/main/skills/find-skills) |
-| skill-creator | Guides creating, structuring, and packaging new skills | auto | ✅ any | ~3k / ~120 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/skill-creator) |
-| writing-skills | Best practices for authoring and testing skills, TDD-style | auto | ✅ any | ~2k / ~40 | stable | MIT | [obra/superpowers](https://github.com/obra/superpowers) |
+| find-skills | Discovers and installs skills from the open ecosystem when you ask "how do I X" | auto | ✅ any | ~1.1k / ~70 | stable | MIT | [vercel-labs/skills](https://github.com/vercel-labs/skills/tree/main/skills/find-skills) |
+| skill-creator | Guides creating, structuring, and packaging new skills | auto | ✅ any | ~6.8k / ~60 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/skill-creator) |
+| writing-skills | Best practices for authoring and testing skills, TDD-style | auto | ✅ any | ~4.9k / ~20 | stable | MIT | [obra/superpowers](https://github.com/obra/superpowers) |
 
 *Token counts approximate, measured as of 2026-07.*
 
@@ -174,10 +174,10 @@ Creating and editing office documents: PDF, Word, PowerPoint, Excel.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| docx | Creates and edits Word documents with tracked changes | auto | CC | ~3k / ~80 | stable | Source-available† | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/docx) |
-| pdf | Generates and manipulates PDFs: forms, merging, extraction | auto | CC | ~3k / ~80 | stable | Source-available† | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/pdf) |
-| pptx | Creates and edits PowerPoint presentations | auto | CC | ~3k / ~80 | stable | Source-available† | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/pptx) |
-| xlsx | Creates and edits Excel spreadsheets with formulas | auto | CC | ~3k / ~80 | stable | Source-available† | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/xlsx) |
+| docx | Creates and edits Word documents with tracked changes | auto | CC | ~3.4k / ~150 | stable | Source-available† | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/docx) |
+| pdf | Generates and manipulates PDFs: forms, merging, extraction | auto | CC | ~1.3k / ~90 | stable | Source-available† | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/pdf) |
+| pptx | Creates and edits PowerPoint presentations | auto | CC | ~1.8k / ~140 | stable | Source-available† | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/pptx) |
+| xlsx | Creates and edits Excel spreadsheets with formulas | auto | CC | ~2.1k / ~200 | stable | Source-available† | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/xlsx) |
 
 *Token counts approximate, measured as of 2026-07.*
 
@@ -189,8 +189,8 @@ Non-dev skills: marketing, product management, comms, and brand work.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| brand-guidelines | Applies Anthropic brand colors and typography to artifacts | auto | ✅ any | ~1.5k / ~70 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/brand-guidelines) |
-| internal-comms | Drafts status reports, newsletters, and FAQs in a consistent internal voice | auto | ✅ any | ~1.5k / ~70 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/internal-comms) |
+| brand-guidelines | Applies Anthropic brand colors and typography to artifacts | auto | ✅ any | ~430 / ~50 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/brand-guidelines) |
+| internal-comms | Drafts status reports, newsletters, and FAQs in a consistent internal voice | auto | ✅ any | ~270 / ~70 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/internal-comms) |
 
 *Token counts approximate, measured as of 2026-07.*
 
