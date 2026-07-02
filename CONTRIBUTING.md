@@ -24,6 +24,11 @@ Add a skill by opening a pull request that inserts one row into the right catego
 9. **As-of date:** when you add or re-measure costs in a table, update its `*Token counts approximate, measured as of YYYY-MM.*` footnote.
 10. **Empty categories:** when adding the first skill to an empty category, replace the placeholder line with the standard table header plus your row and the as-of footnote.
 
-## Coming in phase 2
+## Preferred: submit via issue form
 
-Issue-form submission: you file a GitHub issue with just the SKILL.md URL, category, agents tested, and maturity — automation infers the rest (name, description, license, token counts) and opens a PR for maintainer review.
+Open a [Skill submission issue](../../issues/new?template=skill-submission.yml) with just:
+SKILL.md URL, category, agents tested, and maturity. Automation fetches the skill,
+infers name, description, license, and token counts, and opens a PR that a
+maintainer reviews. No hand-edited tables, no transcription mistakes.
+
+Manual PRs following the rules above remain welcome.

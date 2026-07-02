@@ -222,4 +222,4 @@ For further discovery and research. Skills found here are candidates for their o
 
 ## Contributing
 
-Want to add a skill? See [CONTRIBUTING.md](CONTRIBUTING.md) for the row template and rules. Automated submission via GitHub issue form is planned (phase 2).
+Want to add a skill? Preferred: open a [Skill submission issue](../../issues/new?template=skill-submission.yml) — automation infers the details and opens a PR for review. Manual PRs also welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) for the row template and rules.
