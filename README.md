@@ -103,7 +103,7 @@ Building and shipping web applications end to end.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| web-artifacts-builder | Builds elaborate multi-component claude.ai artifacts with React and Tailwind | auto | CC | ~2k / ~70 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/web-artifacts-builder) |
+| web-artifacts-builder | Generates code for elaborate claude.ai artifacts using React and Tailwind | auto | CC | ~2k / ~70 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/web-artifacts-builder) |
 
 *Token counts approximate, measured as of 2026-07.*
 
@@ -189,7 +189,7 @@ Non-dev skills: marketing, product management, comms, and brand work.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| brand-guidelines | Applies Anthropic brand colors and typography to artifacts (template for your own brand skill) | auto | ✅ any | ~1.5k / ~70 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/brand-guidelines) |
+| brand-guidelines | Applies Anthropic brand colors and typography to artifacts | auto | ✅ any | ~1.5k / ~70 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/brand-guidelines) |
 | internal-comms | Drafts status reports, newsletters, and FAQs in a consistent internal voice | auto | ✅ any | ~1.5k / ~70 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/internal-comms) |
 
 *Token counts approximate, measured as of 2026-07.*
