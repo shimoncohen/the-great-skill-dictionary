@@ -75,6 +75,11 @@ class TestIssueBody(unittest.TestCase):
         self.assertEqual(f["Category"], "🧪 Testing")
         self.assertIsNone(f["Trigger (optional — defaults to auto)"])
 
+    def test_unanswered_dropdown_renders_as_None_string(self):
+        body = "### Trigger (optional \u2014 defaults to auto)\n\nNone\n"
+        f = skill_row.parse_issue_body(body)
+        self.assertIsNone(f["Trigger (optional \u2014 defaults to auto)"])
+
     def test_agents_cell(self):
         self.assertEqual(skill_row.agents_cell("CC, CX"), "CC · CX")
         self.assertEqual(skill_row.agents_cell("✅ any"), "✅ any")

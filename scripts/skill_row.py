@@ -107,7 +107,7 @@ def parse_issue_body(body):
     fields = {}
     for m in re.finditer(r"^### (.+?)\n+(.*?)(?=\n### |\Z)", body, re.S | re.M):
         value = m.group(2).strip()
-        fields[m.group(1).strip()] = None if value in ("", "_No response_") else value
+        fields[m.group(1).strip()] = None if value in ("", "_No response_", "None") else value
     return fields
 
 
