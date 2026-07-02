@@ -38,5 +38,48 @@ class TestTokens(unittest.TestCase):
         self.assertEqual(skill_row.cost_cell(2100, 143), "~2.1k / ~140")
 
 
+class TestUrls(unittest.TestCase):
+    def test_blob_url_to_raw(self):
+        self.assertEqual(
+            skill_row.to_raw_url("https://github.com/o/r/blob/main/skills/x/SKILL.md"),
+            "https://raw.githubusercontent.com/o/r/main/skills/x/SKILL.md",
+        )
+
+    def test_raw_url_passthrough(self):
+        u = "https://raw.githubusercontent.com/o/r/main/SKILL.md"
+        self.assertEqual(skill_row.to_raw_url(u), u)
+
+    def test_repo_web_url(self):
+        self.assertEqual(
+            skill_row.repo_web_url("https://github.com/o/r/blob/main/skills/x/SKILL.md"),
+            ("o/r", "https://github.com/o/r/tree/main/skills/x"),
+        )
+
+    def test_rejects_non_github(self):
+        with self.assertRaises(ValueError):
+            skill_row.to_raw_url("https://evil.example.com/SKILL.md")
+
+
+class TestIssueBody(unittest.TestCase):
+    BODY = (
+        "### SKILL.md URL\n\nhttps://github.com/o/r/blob/main/SKILL.md\n\n"
+        "### Category\n\n🧪 Testing\n\n"
+        "### Agents tested\n\nCC, CX\n\n"
+        "### Maturity\n\nstable\n\n"
+        "### Trigger (optional — defaults to auto)\n\n_No response_\n"
+    )
+
+    def test_parse_fields(self):
+        f = skill_row.parse_issue_body(self.BODY)
+        self.assertEqual(f["SKILL.md URL"], "https://github.com/o/r/blob/main/SKILL.md")
+        self.assertEqual(f["Category"], "🧪 Testing")
+        self.assertIsNone(f["Trigger (optional — defaults to auto)"])
+
+    def test_agents_cell(self):
+        self.assertEqual(skill_row.agents_cell("CC, CX"), "CC · CX")
+        self.assertEqual(skill_row.agents_cell("✅ any"), "✅ any")
+        self.assertEqual(skill_row.agents_cell("✅ any, CC"), "✅ any")
+
+
 if __name__ == "__main__":
     unittest.main()

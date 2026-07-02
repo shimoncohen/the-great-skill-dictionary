@@ -49,3 +49,54 @@ def format_tokens(n):
 
 def cost_cell(invoke, always_on):
     return f"{format_tokens(invoke)} / {format_tokens(always_on)}"
+
+
+def to_raw_url(url):
+    if url.startswith("https://raw.githubusercontent.com/"):
+        return url
+    m = re.match(r"https://github\.com/([^/]+)/([^/]+)/blob/(.+)", url)
+    if not m:
+        raise ValueError(f"not a GitHub SKILL.md URL: {url}")
+    return f"https://raw.githubusercontent.com/{m.group(1)}/{m.group(2)}/{m.group(3)}"
+
+
+def repo_web_url(url):
+    """Return (owner/repo, web URL of the skill's directory)."""
+    m = re.match(r"https://(?:raw\.githubusercontent|github)\.com/([^/]+)/([^/]+)/(?:blob/)?(.+)/SKILL\.md", url)
+    if not m:
+        raise ValueError(f"cannot derive repo from: {url}")
+    owner, repo, path = m.groups()
+    return f"{owner}/{repo}", f"https://github.com/{owner}/{repo}/tree/{path}"
+
+
+def parse_issue_body(body):
+    fields = {}
+    for m in re.finditer(r"^### (.+?)\n+(.*?)(?=\n### |\Z)", body, re.S | re.M):
+        value = m.group(2).strip()
+        fields[m.group(1).strip()] = None if value in ("", "_No response_") else value
+    return fields
+
+
+def agents_cell(raw):
+    agents = [a.strip() for a in raw.split(",") if a.strip()]
+    if "✅ any" in agents:
+        return "✅ any"
+    return " · ".join(agents)
+
+
+def fetch(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "skill-dictionary-bot"})
+    token = os.environ.get("GITHUB_TOKEN")
+    if token and "api.github.com" in url:
+        req.add_header("Authorization", f"Bearer {token}")
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return resp.read().decode("utf-8")
+
+
+def detect_license(owner_repo):
+    try:
+        data = json.loads(fetch(f"https://api.github.com/repos/{owner_repo}/license"))
+        spdx = data.get("license", {}).get("spdx_id")
+        return spdx if spdx and spdx != "NOASSERTION" else "—"
+    except Exception:
+        return "—"
