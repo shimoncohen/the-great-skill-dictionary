@@ -196,7 +196,7 @@ Non-dev skills: marketing, product management, comms, and brand work.
 
 ## 📦 Skill Collections & Registries
 
-For further discovery and research. Skills found here still get their own row in a category above once curated — these are places to browse for more.
+For further discovery and research. Skills found here are candidates for their own row in a category above once curated — these are places to browse for more.
 
 ### Collections
 
@@ -207,6 +207,8 @@ For further discovery and research. Skills found here still get their own row in
 | obra/superpowers | Software-engineering methodology pack: TDD, debugging, planning workflows | MIT | [GitHub](https://github.com/obra/superpowers) |
 | trailofbits/skills | Security-audit skills from Trail of Bits | CC-BY-SA-4.0 | [GitHub](https://github.com/trailofbits/skills) |
 | vercel-labs/skills | Vercel's skill collection and registry CLI | MIT | [GitHub](https://github.com/vercel-labs/skills) |
+
+*†See the Source-available note in the [📄 Documents](#-documents) section.*
 
 ### Registries & lists
 
