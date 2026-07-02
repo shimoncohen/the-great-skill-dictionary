@@ -100,3 +100,46 @@ def detect_license(owner_repo):
         return spdx if spdx and spdx != "NOASSERTION" else "—"
     except Exception:
         return "—"
+
+
+def _split_section(text, category):
+    """Return (before, section, after) for the '## <category>' section."""
+    heading = f"## {category}"
+    idx = text.find(heading + "\n")
+    if idx == -1:
+        raise ValueError(f"category not found in README: {category}")
+    end = text.find("\n## ", idx + len(heading))
+    end = len(text) if end == -1 else end + 1  # keep trailing newline in section
+    return text[:idx], text[idx:end], text[end:]
+
+
+def insert_row(text, category, row, name, date):
+    before, section, after = _split_section(text, category)
+    if any(l.startswith(f"| {name} |") for l in section.splitlines()):
+        raise ValueError(f"skill already listed: {name}")
+    footnote = f"*Token counts approximate, measured as of {date}.*"
+    if PLACEHOLDER in section:
+        section = section.replace(
+            PLACEHOLDER, f"{TABLE_HEADER}\n{row}\n\n{footnote}"
+        )
+    else:
+        lines = section.splitlines()
+        rows = [i for i, l in enumerate(lines)
+                if l.startswith("| ") and not l.startswith("| Skill") and not l.startswith("| ---")]
+        if not rows:
+            raise ValueError(f"no table found in category: {category}")
+        pos = rows[-1] + 1
+        for i in rows:
+            if name.lower() < lines[i].split("|")[1].strip().lower():
+                pos = i
+                break
+        lines.insert(pos, row)
+        section = FOOTNOTE_RE.sub(footnote, "\n".join(lines))
+        if not section.endswith("\n"):
+            section += "\n"
+    return before + section + after
+
+
+def build_row(name, description, trigger, agents, cost, maturity, license_id, repo_name, repo_url):
+    return (f"| {name} | {description} | {trigger} | {agents} | {cost} "
+            f"| {maturity} | {license_id} | [{repo_name}]({repo_url}) |")

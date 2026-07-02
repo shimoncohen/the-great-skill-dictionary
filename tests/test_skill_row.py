@@ -81,5 +81,59 @@ class TestIssueBody(unittest.TestCase):
         self.assertEqual(skill_row.agents_cell("✅ any, CC"), "✅ any")
 
 
+SAMPLE_README = """# Title
+
+## 🧪 Testing
+
+Test authoring.
+
+| Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| alpha | A | auto | ✅ any | ~1k / ~50 | stable | MIT | [r](https://github.com/a/r) |
+| zeta | Z | auto | ✅ any | ~1k / ~50 | stable | MIT | [r](https://github.com/z/r) |
+
+*Token counts approximate, measured as of 2026-07.*
+
+## 🔍 Research
+
+Multi-source research.
+
+No skills catalogued yet — [contribute](#contributing)!
+
+## 📦 Skill Collections & Registries
+"""
+
+
+class TestInsertRow(unittest.TestCase):
+    ROW = "| mid | M | auto | ✅ any | ~2k / ~60 | stable | MIT | [r](https://github.com/m/r) |"
+
+    def test_sorted_insert(self):
+        out = skill_row.insert_row(SAMPLE_README, "🧪 Testing", self.ROW, "mid", "2026-08")
+        lines = out.splitlines()
+        names = [l.split("|")[1].strip() for l in lines if l.startswith("| ") and not l.startswith("| Skill") and not l.startswith("| ---")]
+        self.assertEqual(names, ["alpha", "mid", "zeta"])
+
+    def test_updates_asof_date(self):
+        out = skill_row.insert_row(SAMPLE_README, "🧪 Testing", self.ROW, "mid", "2026-08")
+        self.assertIn("measured as of 2026-08", out)
+        self.assertNotIn("measured as of 2026-07", out)
+
+    def test_empty_category_gets_table(self):
+        out = skill_row.insert_row(SAMPLE_README, "🔍 Research", self.ROW, "mid", "2026-08")
+        section = out.split("## 🔍 Research")[1].split("## 📦")[0]
+        self.assertIn("| Skill | Description |", section)
+        self.assertIn("| mid |", section)
+        self.assertIn("measured as of 2026-08", section)
+        self.assertNotIn("No skills catalogued yet", section)
+
+    def test_duplicate_name_raises(self):
+        with self.assertRaises(ValueError):
+            skill_row.insert_row(SAMPLE_README, "🧪 Testing", self.ROW.replace("mid", "alpha"), "alpha", "2026-08")
+
+    def test_unknown_category_raises(self):
+        with self.assertRaises(ValueError):
+            skill_row.insert_row(SAMPLE_README, "🚀 Nope", self.ROW, "mid", "2026-08")
+
+
 if __name__ == "__main__":
     unittest.main()
