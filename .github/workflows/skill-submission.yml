@@ -16,7 +16,7 @@ jobs:
       group: skill-submission-${{ github.event.issue.number }}
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       # SECURITY: issue body is untrusted input. It is passed via env (not shell
       # interpolation) and only ever parsed by skill_row.py — never eval'd.
@@ -36,7 +36,7 @@ jobs:
 
       - name: Create pull request
         id: pr
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
         with:
           branch: skill-submission/issue-${{ github.event.issue.number }}
           title: "Add skill from #${{ github.event.issue.number }}"
@@ -53,12 +53,28 @@ jobs:
 
       - name: Comment on issue
         if: steps.pr.outputs.pull-request-url
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          PR_URL: ${{ steps.pr.outputs.pull-request-url }}
         with:
           script: |
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `Automation opened ${{ steps.pr.outputs.pull-request-url }} — a maintainer will review it.`,
+              body: `Automation opened ${process.env.PR_URL} — a maintainer will review it.`,
+            })
+
+      - name: Comment on failure
+        if: failure()
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `Automation could not process this submission (bad URL, missing frontmatter, duplicate skill, or invalid field are the usual causes). A maintainer will take a look. [Run log](${process.env.RUN_URL})`,
             })

@@ -12,7 +12,7 @@ jobs:
   remeasure:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Run tests
         run: python3 -m unittest tests.test_skill_row
@@ -23,7 +23,7 @@ jobs:
         run: python3 scripts/skill_row.py remeasure --date "$(date -u +%Y-%m)"
 
       - name: Create pull request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
         with:
           branch: cost-remeasure
           title: "Monthly token-cost re-measure"
