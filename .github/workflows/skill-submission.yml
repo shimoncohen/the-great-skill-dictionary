@@ -15,26 +15,58 @@ jobs:
     concurrency:
       group: skill-submission-${{ github.event.issue.number }}
       cancel-in-progress: true
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+      ISSUE: ${{ github.event.issue.number }}
+      BRANCH: skill-submission/issue-${{ github.event.issue.number }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      # Guard: never override an existing submission branch or open PR for this issue.
+      - name: Check for existing submission branch or PR
+        id: guard
+        run: |
+          exists=false
+          pr_url=$(gh pr list --repo "$REPO" --head "$BRANCH" --state open --json url --jq '.[0].url' || true)
+          if [ -n "$pr_url" ] || git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            exists=true
+          fi
+          echo "exists=$exists" >> "$GITHUB_OUTPUT"
+          echo "pr_url=$pr_url" >> "$GITHUB_OUTPUT"
+
+      - name: Comment when submission already in progress
+        if: steps.guard.outputs.exists == 'true'
+        env:
+          PR_URL: ${{ steps.guard.outputs.pr_url }}
+        run: |
+          if [ -n "$PR_URL" ]; then
+            gh issue comment "$ISSUE" --repo "$REPO" --body "A submission PR already exists for this issue: $PR_URL. Not overriding it. Close that PR first if you want automation to regenerate."
+          else
+            gh issue comment "$ISSUE" --repo "$REPO" --body "A submission branch already exists for this issue. Not overriding it. Delete the branch \`$BRANCH\` first if you want automation to regenerate."
+          fi
 
       # SECURITY: issue body is untrusted input. It is passed via env (not shell
       # interpolation) and only ever parsed by skill_row.py — never eval'd.
       # The resulting PR requires maintainer review before merge.
       - name: Save issue body
+        if: steps.guard.outputs.exists == 'false'
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: printf '%s' "$ISSUE_BODY" > /tmp/issue-body.md
 
       - name: Run tests
+        if: steps.guard.outputs.exists == 'false'
         run: python3 -m unittest tests.test_skill_row
 
       - name: Add skill row
+        if: steps.guard.outputs.exists == 'false'
+        run: python3 scripts/skill_row.py add --issue-body /tmp/issue-body.md --date "$(date -u +%Y-%m)"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 scripts/skill_row.py add --issue-body /tmp/issue-body.md --date "$(date -u +%Y-%m)"
 
       - name: Create pull request
+        if: steps.guard.outputs.exists == 'false'
         id: pr
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
         with:
@@ -53,28 +85,12 @@ jobs:
 
       - name: Comment on issue
         if: steps.pr.outputs.pull-request-url
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           PR_URL: ${{ steps.pr.outputs.pull-request-url }}
-        with:
-          script: |
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: `Automation opened ${process.env.PR_URL} — a maintainer will review it.`,
-            })
+        run: gh issue comment "$ISSUE" --repo "$REPO" --body "Automation opened $PR_URL — a maintainer will review it."
 
       - name: Comment on failure
         if: failure()
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        with:
-          script: |
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: `Automation could not process this submission (bad URL, missing frontmatter, duplicate skill, or invalid field are the usual causes). A maintainer will take a look. [Run log](${process.env.RUN_URL})`,
-            })
+        run: gh issue comment "$ISSUE" --repo "$REPO" --body "Automation could not process this submission (bad URL, missing frontmatter, duplicate skill, or invalid field are the usual causes). A maintainer will take a look. [Run log]($RUN_URL)"
