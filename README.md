@@ -44,7 +44,7 @@ Check each skill's repository for skill-specific install notes.
 - [🔒 Security](#-security)
 - [🔌 API & Integration](#-api--integration)
 - [🧠 Memory & Knowledge](#-memory--knowledge)
-- [⚙️ Automation & Scheduling](#%E2%9A%99%EF%B8%8F-automation--scheduling)
+- [⚙️ Automation & Scheduling](#%EF%B8%8F-automation--scheduling)
 - [🧩 Meta](#-meta)
 - [🔍 Research](#-research)
 - [📄 Documents](#-documents)
