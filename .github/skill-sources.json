@@ -1,0 +1,94 @@
+{
+  "brainstorming": {
+    "category": "🛠️ Engineering Workflow",
+    "url": "https://raw.githubusercontent.com/obra/superpowers/main/skills/brainstorming/SKILL.md"
+  },
+  "brand-guidelines": {
+    "category": "💼 Business & Productivity",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/brand-guidelines/SKILL.md"
+  },
+  "caveman": {
+    "category": "🪙 Token Reduction",
+    "url": "https://raw.githubusercontent.com/JuliusBrussee/caveman/main/skills/caveman/SKILL.md"
+  },
+  "differential-review": {
+    "category": "🔒 Security",
+    "url": "https://raw.githubusercontent.com/trailofbits/skills/main/plugins/differential-review/skills/differential-review/SKILL.md"
+  },
+  "doc-coauthoring": {
+    "category": "📚 Documentation",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/doc-coauthoring/SKILL.md"
+  },
+  "docx": {
+    "category": "📄 Documents",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/docx/SKILL.md"
+  },
+  "find-skills": {
+    "category": "🧩 Meta",
+    "url": "https://raw.githubusercontent.com/vercel-labs/skills/main/skills/find-skills/SKILL.md"
+  },
+  "frontend-design": {
+    "category": "🎨 Design & Frontend",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/frontend-design/SKILL.md"
+  },
+  "internal-comms": {
+    "category": "💼 Business & Productivity",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/internal-comms/SKILL.md"
+  },
+  "karpathy-guidelines": {
+    "category": "🛠️ Engineering Workflow",
+    "url": "https://raw.githubusercontent.com/forrestchang/andrej-karpathy-skills/main/skills/karpathy-guidelines/SKILL.md"
+  },
+  "mcp-builder": {
+    "category": "🔌 API & Integration",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/mcp-builder/SKILL.md"
+  },
+  "pdf": {
+    "category": "📄 Documents",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/pdf/SKILL.md"
+  },
+  "pptx": {
+    "category": "📄 Documents",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/pptx/SKILL.md"
+  },
+  "react-best-practices": {
+    "category": "🎨 Design & Frontend",
+    "url": "https://raw.githubusercontent.com/vercel-labs/agent-skills/main/skills/react-best-practices/SKILL.md"
+  },
+  "semgrep": {
+    "category": "🔒 Security",
+    "url": "https://raw.githubusercontent.com/trailofbits/skills/main/plugins/static-analysis/skills/semgrep/SKILL.md"
+  },
+  "skill-creator": {
+    "category": "🧩 Meta",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/skill-creator/SKILL.md"
+  },
+  "systematic-debugging": {
+    "category": "🛠️ Engineering Workflow",
+    "url": "https://raw.githubusercontent.com/obra/superpowers/main/skills/systematic-debugging/SKILL.md"
+  },
+  "test-driven-development": {
+    "category": "🛠️ Engineering Workflow",
+    "url": "https://raw.githubusercontent.com/obra/superpowers/main/skills/test-driven-development/SKILL.md"
+  },
+  "web-artifacts-builder": {
+    "category": "🌐 Web Development",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/web-artifacts-builder/SKILL.md"
+  },
+  "webapp-testing": {
+    "category": "🧪 Testing",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/webapp-testing/SKILL.md"
+  },
+  "writing-plans": {
+    "category": "🛠️ Engineering Workflow",
+    "url": "https://raw.githubusercontent.com/obra/superpowers/main/skills/writing-plans/SKILL.md"
+  },
+  "writing-skills": {
+    "category": "🧩 Meta",
+    "url": "https://raw.githubusercontent.com/obra/superpowers/main/skills/writing-skills/SKILL.md"
+  },
+  "xlsx": {
+    "category": "📄 Documents",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/xlsx/SKILL.md"
+  }
+}
