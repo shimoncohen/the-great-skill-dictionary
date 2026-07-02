@@ -1,0 +1,69 @@
+name: Skill submission
+description: Submit a skill for the dictionary. Automation infers the rest and opens a PR.
+title: "[Skill]: "
+labels: ["skill-submission"]
+body:
+  - type: input
+    id: skill-url
+    attributes:
+      label: SKILL.md URL
+      description: Direct link to the skill's SKILL.md on GitHub (blob or raw URL).
+      placeholder: https://github.com/owner/repo/blob/main/skills/my-skill/SKILL.md
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - 🪙 Token Reduction
+        - 🛠️ Engineering Workflow
+        - 🧪 Testing
+        - 🎨 Design & Frontend
+        - 🌐 Web Development
+        - 📚 Documentation
+        - 🔒 Security
+        - 🔌 API & Integration
+        - 🧠 Memory & Knowledge
+        - ⚙️ Automation & Scheduling
+        - 🧩 Meta
+        - 🔍 Research
+        - 📄 Documents
+        - 💼 Business & Productivity
+    validations:
+      required: true
+  - type: dropdown
+    id: agents
+    attributes:
+      label: Agents tested
+      description: Pick "✅ any" only if the skill is plain portable markdown.
+      multiple: true
+      options:
+        - ✅ any
+        - CC
+        - CX
+        - GM
+        - CP
+    validations:
+      required: true
+  - type: dropdown
+    id: maturity
+    attributes:
+      label: Maturity
+      options:
+        - stable
+        - beta
+        - experimental
+        - archived
+    validations:
+      required: true
+  - type: dropdown
+    id: trigger
+    attributes:
+      label: Trigger (optional — defaults to auto)
+      options:
+        - auto
+        - manual
+        - always-on
+    validations:
+      required: false
