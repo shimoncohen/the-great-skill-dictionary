@@ -71,6 +71,10 @@
     "category": "🛠️ Engineering Workflow",
     "url": "https://raw.githubusercontent.com/obra/superpowers/main/skills/test-driven-development/SKILL.md"
   },
+  "theme-factory": {
+    "category": "🎨 Design & Frontend",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/theme-factory/SKILL.md"
+  },
   "web-artifacts-builder": {
     "category": "🌐 Web Development",
     "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/web-artifacts-builder/SKILL.md"
