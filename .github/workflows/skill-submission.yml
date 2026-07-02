@@ -1,0 +1,64 @@
+name: Skill submission
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  add-skill:
+    if: contains(github.event.issue.labels.*.name, 'skill-submission')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: skill-submission-${{ github.event.issue.number }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      # SECURITY: issue body is untrusted input. It is passed via env (not shell
+      # interpolation) and only ever parsed by skill_row.py — never eval'd.
+      # The resulting PR requires maintainer review before merge.
+      - name: Save issue body
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: printf '%s' "$ISSUE_BODY" > /tmp/issue-body.md
+
+      - name: Run tests
+        run: python3 -m unittest tests.test_skill_row
+
+      - name: Add skill row
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/skill_row.py add --issue-body /tmp/issue-body.md --date "$(date -u +%Y-%m)"
+
+      - name: Create pull request
+        id: pr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: skill-submission/issue-${{ github.event.issue.number }}
+          title: "Add skill from #${{ github.event.issue.number }}"
+          commit-message: |
+            Add skill from issue #${{ github.event.issue.number }}
+          body: |
+            Automated skill row for #${{ github.event.issue.number }}.
+            Inferred: name, description, license, token costs. Review before merging.
+
+            Closes #${{ github.event.issue.number }}
+          add-paths: |
+            README.md
+            .github/skill-sources.json
+
+      - name: Comment on issue
+        if: steps.pr.outputs.pull-request-url
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `Automation opened ${{ steps.pr.outputs.pull-request-url }} — a maintainer will review it.`,
+            })
