@@ -175,10 +175,12 @@ class TestInsertRow(unittest.TestCase):
         names = [l.split("|")[1].strip() for l in lines if l.startswith("| ") and not l.startswith("| Skill") and not l.startswith("| ---")]
         self.assertEqual(names, ["alpha", "mid", "zeta"])
 
-    def test_updates_asof_date(self):
+    def test_preserves_asof_date(self):
+        # Only `remeasure` refreshes costs, so inserting a row must not
+        # touch the existing footnote date.
         out = skill_row.insert_row(SAMPLE_README, "🧪 Testing", self.ROW, "mid", "2026-08")
-        self.assertIn("measured as of 2026-08", out)
-        self.assertNotIn("measured as of 2026-07", out)
+        self.assertIn("measured as of 2026-07", out)
+        self.assertNotIn("measured as of 2026-08", out)
 
     def test_empty_category_gets_table(self):
         out = skill_row.insert_row(SAMPLE_README, "🔍 Research", self.ROW, "mid", "2026-08")

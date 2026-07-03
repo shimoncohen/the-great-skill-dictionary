@@ -207,7 +207,10 @@ def insert_row(text, category, row, name, date):
                 pos = i
                 break
         lines.insert(pos, row)
-        section = FOOTNOTE_RE.sub(footnote, "\n".join(lines))
+        # Leave the existing footnote date alone: it records when costs were
+        # measured, and only `remeasure` refreshes costs. Also keeps
+        # concurrent submission PRs from all rewriting the same line.
+        section = "\n".join(lines)
         if not section.endswith("\n"):
             section += "\n"
     return before + section + after
