@@ -24,6 +24,17 @@ Add a skill by opening a pull request that inserts one row into the right catego
 9. **As-of date:** when you add or re-measure costs in a table, update its `*Token counts approximate, measured as of YYYY-MM.*` footnote.
 10. **Empty categories:** when adding the first skill to an empty category, replace the placeholder line with the standard table header plus your row and the as-of footnote.
 
+## Collections & registries rows
+
+The 📦 Skill Collections & Registries tables are maintained by hand (the issue-form automation only adds skill rows). Both tables include a **Stars** column with a dynamic shields.io badge:
+
+```markdown
+![Stars](https://img.shields.io/github/stars/owner/repo?style=flat-square&label=%E2%AD%90)
+```
+
+- Replace `owner/repo` with the entry's GitHub repository. The count updates automatically — never hard-code star numbers.
+- For entries not hosted on GitHub (e.g. standalone marketplaces), use `—` in the Stars cell.
+
 ## Preferred: submit via issue form
 
 Open a [Skill submission issue](../../issues/new?template=skill-submission.yml) with just:

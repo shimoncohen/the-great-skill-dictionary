@@ -200,25 +200,25 @@ For further discovery and research. Skills found here are candidates for their o
 
 ### Collections
 
-| Repo | Description | License | Link |
-| --- | --- | --- | --- |
-| alirezarezvani/claude-skills | Large community skill pack, explicitly multi-agent portable | — | [GitHub](https://github.com/alirezarezvani/claude-skills) |
-| anthropics/skills | Anthropic's official example skills and skill spec template | Apache-2.0 / Source-available† | [GitHub](https://github.com/anthropics/skills) |
-| obra/superpowers | Software-engineering methodology pack: TDD, debugging, planning workflows | MIT | [GitHub](https://github.com/obra/superpowers) |
-| trailofbits/skills | Security-audit skills from Trail of Bits | CC-BY-SA-4.0 | [GitHub](https://github.com/trailofbits/skills) |
-| vercel-labs/skills | Vercel's skill collection and registry CLI | MIT | [GitHub](https://github.com/vercel-labs/skills) |
+| Repo | Description | Stars | License | Link |
+| --- | --- | --- | --- | --- |
+| alirezarezvani/claude-skills | Large community skill pack, explicitly multi-agent portable | ![Stars](https://img.shields.io/github/stars/alirezarezvani/claude-skills?style=flat-square&label=%E2%AD%90) | — | [GitHub](https://github.com/alirezarezvani/claude-skills) |
+| anthropics/skills | Anthropic's official example skills and skill spec template | ![Stars](https://img.shields.io/github/stars/anthropics/skills?style=flat-square&label=%E2%AD%90) | Apache-2.0 / Source-available† | [GitHub](https://github.com/anthropics/skills) |
+| obra/superpowers | Software-engineering methodology pack: TDD, debugging, planning workflows | ![Stars](https://img.shields.io/github/stars/obra/superpowers?style=flat-square&label=%E2%AD%90) | MIT | [GitHub](https://github.com/obra/superpowers) |
+| trailofbits/skills | Security-audit skills from Trail of Bits | ![Stars](https://img.shields.io/github/stars/trailofbits/skills?style=flat-square&label=%E2%AD%90) | CC-BY-SA-4.0 | [GitHub](https://github.com/trailofbits/skills) |
+| vercel-labs/skills | Vercel's skill collection and registry CLI | ![Stars](https://img.shields.io/github/stars/vercel-labs/skills?style=flat-square&label=%E2%AD%90) | MIT | [GitHub](https://github.com/vercel-labs/skills) |
 
 *†See the Source-available note in the [📄 Documents](#-documents) section.*
 
 ### Registries & lists
 
-| Name | Type | Link |
-| --- | --- | --- |
-| awesome-agent-skills (heilcheng) | awesome-list | [GitHub](https://github.com/heilcheng/awesome-agent-skills) |
-| awesome-claude-skills (travisvn) | awesome-list | [GitHub](https://github.com/travisvn/awesome-claude-skills) |
-| SkillHub | marketplace | [skillhub.club](https://www.skillhub.club/) |
-| skills.sh | registry | [skills.sh](https://www.skills.sh/) |
-| SkillsMP | registry | [skillsmp.com](https://skillsmp.com/) |
+| Name | Type | Stars | Link |
+| --- | --- | --- | --- |
+| awesome-agent-skills (heilcheng) | awesome-list | ![Stars](https://img.shields.io/github/stars/heilcheng/awesome-agent-skills?style=flat-square&label=%E2%AD%90) | [GitHub](https://github.com/heilcheng/awesome-agent-skills) |
+| awesome-claude-skills (travisvn) | awesome-list | ![Stars](https://img.shields.io/github/stars/travisvn/awesome-claude-skills?style=flat-square&label=%E2%AD%90) | [GitHub](https://github.com/travisvn/awesome-claude-skills) |
+| SkillHub | marketplace | — | [skillhub.club](https://www.skillhub.club/) |
+| skills.sh | registry | — | [skills.sh](https://www.skills.sh/) |
+| SkillsMP | registry | — | [skillsmp.com](https://skillsmp.com/) |
 
 ## Contributing
 
