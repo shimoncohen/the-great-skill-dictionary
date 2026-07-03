@@ -1,0 +1,72 @@
+name: Regenerate submission PRs
+# When main changes (a submission was merged), open skill-submission PRs go
+# stale and can conflict. Their content is fully derived from the issue, so
+# instead of resolving conflicts we regenerate each open PR branch from the
+# new main and force-push it.
+on:
+  push:
+    branches: [main]
+    paths:
+      - README.md
+      - .github/skill-sources.json
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: regenerate-submissions
+  cancel-in-progress: false
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      # SECURITY: issue bodies are untrusted input. They are written to a file
+      # via gh (never shell-interpolated) and only ever parsed by skill_row.py.
+      - name: Regenerate open submission branches
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          branches=$(gh pr list --repo "$REPO" --state open --json headRefName \
+            --jq '.[].headRefName | select(startswith("skill-submission/issue-"))')
+          [ -z "$branches" ] && { echo "no open submission PRs"; exit 0; }
+
+          failed=0
+          for branch in $branches; do
+            issue="${branch#skill-submission/issue-}"
+            echo "::group::regenerating $branch (issue #$issue)"
+            git checkout -qB "$branch" "$GITHUB_SHA"
+
+            if ! gh issue view "$issue" --repo "$REPO" --json body --jq .body > /tmp/issue-body.md; then
+              echo "cannot read issue #$issue; skipping"
+              failed=1; echo "::endgroup::"; continue
+            fi
+
+            if python3 scripts/skill_row.py add --issue-body /tmp/issue-body.md --date "$(date -u +%Y-%m)"; then
+              login=$(gh issue view "$issue" --repo "$REPO" --json author --jq .author.login)
+              uid=$(gh api "users/$login" --jq .id)
+              git add README.md .github/skill-sources.json
+              git commit -q -m "Add skill from issue #$issue" \
+                -m "Co-authored-by: $login <$uid+$login@users.noreply.github.com>" \
+                --author "$login <$uid+$login@users.noreply.github.com>"
+              git push -f -q origin "$branch"
+              echo "regenerated $branch"
+            else
+              failed=1
+              gh issue comment "$issue" --repo "$REPO" --body \
+                "Automation could not regenerate this submission after main changed (a duplicate skill or an unreachable URL are the usual causes). A maintainer will take a look." \
+                || echo "could not comment on issue #$issue"
+            fi
+
+            git reset -q --hard "$GITHUB_SHA"
+            echo "::endgroup::"
+          done
+          exit "$failed"
