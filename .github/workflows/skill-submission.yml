@@ -2,6 +2,14 @@ name: Skill submission
 on:
   issues:
     types: [opened, labeled]
+  # Regeneration path: re-run generation for an existing submission issue
+  # (dispatched by regenerate-submissions.yml after main changes). Skips the
+  # duplicate guard — updating the existing branch/PR is the point.
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue number of the skill submission to (re)generate
+        required: true
 
 permissions:
   contents: write
@@ -10,22 +18,43 @@ permissions:
 
 jobs:
   add-skill:
-    if: contains(github.event.issue.labels.*.name, 'skill-submission')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.issue.labels.*.name, 'skill-submission')
     runs-on: ubuntu-latest
     concurrency:
-      group: skill-submission-${{ github.event.issue.number }}
+      group: skill-submission-${{ github.event.issue.number || inputs.issue_number }}
       cancel-in-progress: true
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       REPO: ${{ github.repository }}
-      ISSUE: ${{ github.event.issue.number }}
-      BRANCH: skill-submission/issue-${{ github.event.issue.number }}
+      ISSUE: ${{ github.event.issue.number || inputs.issue_number }}
+      BRANCH: skill-submission/issue-${{ github.event.issue.number || inputs.issue_number }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      # Guard: never override an existing submission branch or open PR for this issue.
+      # SECURITY: the issue body is untrusted input. It is written to a file by
+      # jq (never shell-interpolated) and only ever parsed by skill_row.py —
+      # never eval'd. The resulting PR requires maintainer review before merge.
+      - name: Resolve issue
+        id: issue
+        run: |
+          data=$(gh api "repos/$REPO/issues/$ISSUE")
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            jq -e 'any(.labels[]; .name == "skill-submission")' <<<"$data" >/dev/null \
+              || { echo "issue #$ISSUE is not a skill submission"; exit 1; }
+            jq -e '.state == "open"' <<<"$data" >/dev/null \
+              || { echo "issue #$ISSUE is closed"; exit 1; }
+          fi
+          jq -r '.body // ""' <<<"$data" > /tmp/issue-body.md
+          {
+            echo "login=$(jq -r .user.login <<<"$data")"
+            echo "uid=$(jq -r .user.id <<<"$data")"
+          } >> "$GITHUB_OUTPUT"
+
+      # Guard: never override an existing submission branch or open PR for this
+      # issue on label events. Deliberate regeneration (dispatch) skips this.
       - name: Check for existing submission branch or PR
         id: guard
+        if: github.event_name == 'issues'
         run: |
           exists=false
           pr_url=$(gh pr list --repo "$REPO" --head "$BRANCH" --state open --json url --jq '.[0].url' || true)
@@ -46,49 +75,40 @@ jobs:
             gh issue comment "$ISSUE" --repo "$REPO" --body "A submission branch already exists for this issue. Not overriding it. Delete the branch \`$BRANCH\` first if you want automation to regenerate."
           fi
 
-      # SECURITY: issue body is untrusted input. It is passed via env (not shell
-      # interpolation) and only ever parsed by skill_row.py — never eval'd.
-      # The resulting PR requires maintainer review before merge.
-      - name: Save issue body
-        if: steps.guard.outputs.exists == 'false'
-        env:
-          ISSUE_BODY: ${{ github.event.issue.body }}
-        run: printf '%s' "$ISSUE_BODY" > /tmp/issue-body.md
-
       - name: Run tests
-        if: steps.guard.outputs.exists == 'false'
+        if: steps.guard.outputs.exists != 'true'
         run: python3 -m unittest tests.test_skill_row
 
       - name: Add skill row
-        if: steps.guard.outputs.exists == 'false'
+        if: steps.guard.outputs.exists != 'true'
         run: python3 scripts/skill_row.py add --issue-body /tmp/issue-body.md --date "$(date -u +%Y-%m)"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create pull request
-        if: steps.guard.outputs.exists == 'false'
+      - name: Create or update pull request
+        if: steps.guard.outputs.exists != 'true'
         id: pr
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
         with:
-          branch: skill-submission/issue-${{ github.event.issue.number }}
-          assignees: ${{ github.event.issue.user.login }}
-          title: "Add skill from #${{ github.event.issue.number }}"
-          author: ${{ github.event.issue.user.login }} <${{ github.event.issue.user.id }}+${{ github.event.issue.user.login }}@users.noreply.github.com>
+          branch: ${{ env.BRANCH }}
+          assignees: ${{ steps.issue.outputs.login }}
+          title: "Add skill from #${{ env.ISSUE }}"
+          author: ${{ steps.issue.outputs.login }} <${{ steps.issue.outputs.uid }}+${{ steps.issue.outputs.login }}@users.noreply.github.com>
           commit-message: |
-            Add skill from issue #${{ github.event.issue.number }}
+            Add skill from issue #${{ env.ISSUE }}
 
-            Co-authored-by: ${{ github.event.issue.user.login }} <${{ github.event.issue.user.id }}+${{ github.event.issue.user.login }}@users.noreply.github.com>
+            Co-authored-by: ${{ steps.issue.outputs.login }} <${{ steps.issue.outputs.uid }}+${{ steps.issue.outputs.login }}@users.noreply.github.com>
           body: |
-            Automated skill row for #${{ github.event.issue.number }}.
+            Automated skill row for #${{ env.ISSUE }}.
             Inferred: name, description, license, token costs. Review before merging.
 
-            Closes #${{ github.event.issue.number }}
+            Closes #${{ env.ISSUE }}
           add-paths: |
             README.md
             .github/skill-sources.json
 
       - name: Comment on issue
-        if: steps.pr.outputs.pull-request-url
+        if: steps.pr.outputs.pull-request-operation == 'created'
         env:
           PR_URL: ${{ steps.pr.outputs.pull-request-url }}
         run: gh issue comment "$ISSUE" --repo "$REPO" --body "Automation opened $PR_URL — a maintainer will review it."
