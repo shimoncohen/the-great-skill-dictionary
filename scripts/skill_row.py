@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import urllib.request
+from urllib.parse import urlsplit
 
 README = "README.md"
 SOURCES = ".github/skill-sources.json"
@@ -85,54 +86,59 @@ def cost_cell(invoke, always_on):
     return f"{format_tokens(invoke)} / {format_tokens(always_on)}"
 
 
-# SECURITY: URLs come from untrusted issue bodies. validate_skill_url runs
+# SECURITY: URLs come from untrusted issue bodies. parse_skill_url runs
 # before any network request; everything it rejects is never fetched.
-_URL_OWNER = r"[A-Za-z0-9-]{1,39}"
-_URL_REPO = r"[A-Za-z0-9._-]{1,100}"
-_URL_SEGMENT_RE = re.compile(r"\A[A-Za-z0-9._-]+\Z")
+_OWNER_RE = re.compile(r"\A[A-Za-z0-9-]{1,39}\Z")
+_REPO_RE = re.compile(r"\A[A-Za-z0-9._-]{1,100}\Z")
+_SEGMENT_RE = re.compile(r"\A[A-Za-z0-9._-]+\Z")
 
 
-def validate_skill_url(url):
-    """Strict allowlist: https URLs on github.com (blob) or
-    raw.githubusercontent.com only, pointing directly at a markdown file
-    (any name, .md case-insensitive), with a conservative path charset
-    (no query, fragment, %-encoding, userinfo, empty segments, or '..').
+def parse_skill_url(url):
+    """Validate an untrusted skill URL and return its parts.
+
+    Accepts only https URLs on github.com (blob) or raw.githubusercontent.com
+    pointing at a markdown file (any name, .md case-insensitive), with a
+    conservative path charset (no query, fragment, %-encoding, userinfo,
+    empty segments, or '..'). Returns (owner, repo, segments) where segments
+    is the ref+path, e.g. ['main', 'skills', 'x', 'SKILL.md'].
     Raises ValueError otherwise."""
-    m = re.match(
-        rf"\Ahttps://(?:github\.com/({_URL_OWNER})/({_URL_REPO})/blob"
-        rf"|raw\.githubusercontent\.com/({_URL_OWNER})/({_URL_REPO}))/(.+)\Z",
-        url,
-    )
-    if not m:
+    parts = urlsplit(url)
+    if parts.scheme != "https" or parts.query or parts.fragment:
         raise ValueError(f"not an official GitHub skill file URL: {url}")
-    repo = m.group(2) or m.group(4)
-    if repo in (".", "..") or repo.endswith(".git"):
+
+    segments = parts.path.lstrip("/").split("/")
+    if parts.netloc == "github.com":
+        if len(segments) < 5 or segments[2] != "blob":
+            raise ValueError(f"expected a github.com blob URL: {url}")
+        owner, repo, segments = segments[0], segments[1], segments[3:]
+    elif parts.netloc == "raw.githubusercontent.com":
+        if len(segments) < 4:
+            raise ValueError(f"expected a raw.githubusercontent.com URL: {url}")
+        owner, repo, segments = segments[0], segments[1], segments[2:]
+    else:
+        raise ValueError(f"not an official GitHub host: {url}")
+
+    if not _OWNER_RE.match(owner):
+        raise ValueError(f"invalid owner in URL: {url}")
+    if not _REPO_RE.match(repo) or repo in (".", "..") or repo.endswith(".git"):
         raise ValueError(f"invalid repository name in URL: {url}")
-    segments = m.group(5).split("/")
-    # At least <ref>/<file>; the file must be markdown.
-    if len(segments) < 2 or not segments[-1].lower().endswith(".md"):
-        raise ValueError(f"URL must point directly to a markdown skill file: {url}")
     for seg in segments:
-        if seg in (".", "..") or not _URL_SEGMENT_RE.match(seg):
+        if seg in (".", "..") or not _SEGMENT_RE.match(seg):
             raise ValueError(f"invalid path segment in URL: {url}")
+    if not segments[-1].lower().endswith(".md"):
+        raise ValueError(f"URL must point directly to a markdown file: {url}")
+    return owner, repo, segments
 
 
 def to_raw_url(url):
-    if url.startswith("https://raw.githubusercontent.com/"):
-        return url
-    m = re.match(r"https://github\.com/([^/]+)/([^/]+)/blob/(.+)", url)
-    if not m:
-        raise ValueError(f"not a GitHub SKILL.md URL: {url}")
-    return f"https://raw.githubusercontent.com/{m.group(1)}/{m.group(2)}/{m.group(3)}"
+    owner, repo, segments = parse_skill_url(url)
+    return f"https://raw.githubusercontent.com/{owner}/{repo}/{'/'.join(segments)}"
 
 
 def repo_web_url(url):
     """Return (owner/repo, web URL of the skill's directory)."""
-    m = re.match(r"https://(?:raw\.githubusercontent|github)\.com/([^/]+)/([^/]+)/(?:blob/)?(.+)/[^/]+\.[mM][dD]\Z", url)
-    if not m:
-        raise ValueError(f"cannot derive repo from: {url}")
-    owner, repo, path = m.groups()
-    return f"{owner}/{repo}", f"https://github.com/{owner}/{repo}/tree/{path}"
+    owner, repo, segments = parse_skill_url(url)
+    return f"{owner}/{repo}", f"https://github.com/{owner}/{repo}/tree/{'/'.join(segments[:-1])}"
 
 
 def parse_issue_body(body):
@@ -262,8 +268,7 @@ def cmd_add(issue_body_file, date):
     trigger_key = next((k for k in fields if k.startswith("Trigger")), None)
     trigger = fields.get(trigger_key) or "auto"
     validate_fields(category, fields["Agents tested"], fields["Maturity"], trigger)
-    validate_skill_url(url)
-    raw_url = to_raw_url(url)
+    raw_url = to_raw_url(url)  # parse_skill_url inside rejects non-GitHub URLs before any fetch
     skill_md = fetch(raw_url)
     fm = parse_frontmatter(skill_md)
     name = clean_cell(fm["name"])  # normalize once; row, dup check, and registry all use the same form

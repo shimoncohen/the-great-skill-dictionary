@@ -60,16 +60,16 @@ class TestUrls(unittest.TestCase):
             skill_row.to_raw_url("https://evil.example.com/SKILL.md")
 
 
-class TestValidateSkillUrl(unittest.TestCase):
+class TestParseSkillUrl(unittest.TestCase):
     def test_valid_blob_url(self):
-        skill_row.validate_skill_url("https://github.com/owner/repo/blob/main/skills/x/SKILL.md")
+        skill_row.parse_skill_url("https://github.com/owner/repo/blob/main/skills/x/SKILL.md")
 
     def test_valid_raw_url(self):
-        skill_row.validate_skill_url("https://raw.githubusercontent.com/owner/repo/main/SKILL.md")
+        skill_row.parse_skill_url("https://raw.githubusercontent.com/owner/repo/main/SKILL.md")
 
     def assert_rejected(self, url):
         with self.assertRaises(ValueError):
-            skill_row.validate_skill_url(url)
+            skill_row.parse_skill_url(url)
 
     def test_rejects_other_domains(self):
         self.assert_rejected("https://gitlab.com/o/r/blob/main/SKILL.md")
@@ -84,9 +84,9 @@ class TestValidateSkillUrl(unittest.TestCase):
         self.assert_rejected("http://github.com/o/r/blob/main/SKILL.md")
 
     def test_accepts_any_markdown_filename_case_insensitive(self):
-        skill_row.validate_skill_url("https://github.com/o/r/blob/main/skills/x/skill.md")
-        skill_row.validate_skill_url("https://github.com/o/r/blob/main/my-skill.MD")
-        skill_row.validate_skill_url("https://github.com/o/r/blob/main/README.md")
+        skill_row.parse_skill_url("https://github.com/o/r/blob/main/skills/x/skill.md")
+        skill_row.parse_skill_url("https://github.com/o/r/blob/main/my-skill.MD")
+        skill_row.parse_skill_url("https://github.com/o/r/blob/main/README.md")
 
     def test_rejects_non_markdown_target(self):
         self.assert_rejected("https://github.com/o/r/tree/main/skills/x")
