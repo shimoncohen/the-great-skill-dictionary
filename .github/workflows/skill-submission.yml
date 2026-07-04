@@ -114,10 +114,14 @@ jobs:
         with:
           branch: ${{ steps.issue.outputs.branch }}
           assignees: ${{ steps.issue.outputs.login }}
-          title: "Add ${{ steps.issue.outputs.kind }} from #${{ env.ISSUE }}"
+          # Conventional-commit title: GitHub's default squash subject is the
+          # PR title, so maintainer-merged PRs stay commitlint-clean too.
+          title: "feat: add ${{ steps.issue.outputs.kind }} ${{ steps.add.outputs.name }}"
           author: ${{ steps.issue.outputs.login }} <${{ steps.issue.outputs.uid }}+${{ steps.issue.outputs.login }}@users.noreply.github.com>
           commit-message: |
-            Add ${{ steps.issue.outputs.kind }} from issue #${{ env.ISSUE }}
+            feat: add ${{ steps.issue.outputs.kind }} ${{ steps.add.outputs.name }}
+
+            Generated from issue #${{ env.ISSUE }}.
 
             Co-authored-by: ${{ steps.issue.outputs.login }} <${{ steps.issue.outputs.uid }}+${{ steps.issue.outputs.login }}@users.noreply.github.com>
           body: |
@@ -141,9 +145,14 @@ jobs:
         if: steps.pr.outputs.pull-request-operation == 'created' && steps.add.outputs.automerge == 'true'
         env:
           PR_URL: ${{ steps.pr.outputs.pull-request-url }}
+          PR_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
           STARS: ${{ steps.add.outputs.stars }}
+          KIND: ${{ steps.issue.outputs.kind }}
+          NAME: ${{ steps.add.outputs.name }}
         run: |
-          gh pr merge "$PR_URL" --repo "$REPO" --squash
+          gh pr merge "$PR_URL" --repo "$REPO" --squash \
+            --subject "feat: add $KIND $NAME (#$PR_NUMBER)" \
+            --body "Generated from issue #$ISSUE; auto-merged at $STARS stars. Closes #$ISSUE"
           gh issue comment "$ISSUE" --repo "$REPO" --body "Auto-merged $PR_URL — repository has $STARS stars (threshold: 1000)."
 
       - name: Comment on issue
