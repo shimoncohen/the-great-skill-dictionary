@@ -1,4 +1,6 @@
-name: Skill submission
+# Filename stays skill-submission.yml: regenerate-submissions.yml dispatches
+# this workflow by filename.
+name: Submission
 # Handles both skill submissions (label: skill-submission) and collection/
 # registry submissions (label: collection-submission). The kind is derived
 # from the issue's labels and picks the script command and branch prefix.
@@ -34,7 +36,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       # SECURITY: the issue body is untrusted input. It is written to a file by
-      # jq (never shell-interpolated) and only ever parsed by skill_row.py —
+      # jq (never shell-interpolated) and only ever parsed by dictionary.py —
       # never eval'd. The resulting PR requires maintainer review before merge.
       - name: Resolve issue
         id: issue
@@ -85,7 +87,7 @@ jobs:
 
       - name: Run tests
         if: steps.guard.outputs.exists != 'true'
-        run: python3 -m unittest tests.test_skill_row
+        run: python3 -m unittest tests.test_dictionary
 
       - name: Add row
         if: steps.guard.outputs.exists != 'true'
@@ -94,9 +96,9 @@ jobs:
           KIND: ${{ steps.issue.outputs.kind }}
         run: |
           if [ "$KIND" = "collection" ]; then
-            python3 scripts/skill_row.py add-collection --issue-body /tmp/issue-body.md
+            python3 scripts/dictionary.py add-collection --issue-body /tmp/issue-body.md
           else
-            python3 scripts/skill_row.py add --issue-body /tmp/issue-body.md --date "$(date -u +%Y-%m)"
+            python3 scripts/dictionary.py add --issue-body /tmp/issue-body.md --date "$(date -u +%Y-%m)"
           fi
 
       - name: Create or update pull request

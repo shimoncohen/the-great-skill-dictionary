@@ -2,83 +2,83 @@ import unittest
 import urllib.error
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
-import skill_row
+import dictionary
 
 
 class TestFrontmatter(unittest.TestCase):
     def test_parses_name_and_description(self):
         text = "---\nname: my-skill\ndescription: Does a thing well\n---\n\n# Body\ncontent"
-        fm = skill_row.parse_frontmatter(text)
+        fm = dictionary.parse_frontmatter(text)
         self.assertEqual(fm["name"], "my-skill")
         self.assertEqual(fm["description"], "Does a thing well")
 
     def test_missing_frontmatter_raises(self):
         with self.assertRaises(ValueError):
-            skill_row.parse_frontmatter("# Just a heading\nno frontmatter")
+            dictionary.parse_frontmatter("# Just a heading\nno frontmatter")
 
     def test_ignores_other_keys_and_colons_in_value(self):
         text = "---\nname: x\ndescription: Use when: always\nlicense: MIT\n---\nbody"
-        fm = skill_row.parse_frontmatter(text)
+        fm = dictionary.parse_frontmatter(text)
         self.assertEqual(fm["description"], "Use when: always")
 
     def test_folded_scalar_description(self):
         text = "---\nname: x\ndescription: >-\n  line one\n  line two\n---\nbody"
-        fm = skill_row.parse_frontmatter(text)
+        fm = dictionary.parse_frontmatter(text)
         self.assertEqual(fm["description"], "line one line two")
 
 
 class TestTokens(unittest.TestCase):
     def test_estimate_words_times_1_3(self):
         text = " ".join(["word"] * 1000)
-        self.assertEqual(skill_row.estimate_tokens(text), 1300)
+        self.assertEqual(dictionary.estimate_tokens(text), 1300)
 
     def test_format_small_rounds_to_ten(self):
-        self.assertEqual(skill_row.format_tokens(143), "~140")
+        self.assertEqual(dictionary.format_tokens(143), "~140")
 
     def test_format_tokens_3_returns_ten(self):
-        self.assertEqual(skill_row.format_tokens(3), "~10")
+        self.assertEqual(dictionary.format_tokens(3), "~10")
 
     def test_format_k(self):
-        self.assertEqual(skill_row.format_tokens(2100), "~2.1k")
-        self.assertEqual(skill_row.format_tokens(2000), "~2k")
-        self.assertEqual(skill_row.format_tokens(12600), "~13k")
+        self.assertEqual(dictionary.format_tokens(2100), "~2.1k")
+        self.assertEqual(dictionary.format_tokens(2000), "~2k")
+        self.assertEqual(dictionary.format_tokens(12600), "~13k")
 
     def test_cost_cell(self):
-        self.assertEqual(skill_row.cost_cell(2100, 143), "~2.1k / ~140")
+        self.assertEqual(dictionary.cost_cell(2100, 143), "~2.1k / ~140")
 
 
 class TestUrls(unittest.TestCase):
     def test_blob_url_to_raw(self):
         self.assertEqual(
-            skill_row.to_raw_url("https://github.com/o/r/blob/main/skills/x/SKILL.md"),
+            dictionary.to_raw_url("https://github.com/o/r/blob/main/skills/x/SKILL.md"),
             "https://raw.githubusercontent.com/o/r/main/skills/x/SKILL.md",
         )
 
     def test_raw_url_passthrough(self):
         u = "https://raw.githubusercontent.com/o/r/main/SKILL.md"
-        self.assertEqual(skill_row.to_raw_url(u), u)
+        self.assertEqual(dictionary.to_raw_url(u), u)
 
     def test_repo_web_url(self):
         self.assertEqual(
-            skill_row.repo_web_url("https://github.com/o/r/blob/main/skills/x/SKILL.md"),
+            dictionary.repo_web_url("https://github.com/o/r/blob/main/skills/x/SKILL.md"),
             ("o/r", "https://github.com/o/r/tree/main/skills/x"),
         )
 
     def test_rejects_non_github(self):
         with self.assertRaises(ValueError):
-            skill_row.to_raw_url("https://evil.example.com/SKILL.md")
+            dictionary.to_raw_url("https://evil.example.com/SKILL.md")
 
 
 class TestParseSkillUrl(unittest.TestCase):
     def test_valid_blob_url(self):
-        skill_row.parse_skill_url("https://github.com/owner/repo/blob/main/skills/x/SKILL.md")
+        dictionary.parse_skill_url("https://github.com/owner/repo/blob/main/skills/x/SKILL.md")
 
     def test_valid_raw_url(self):
-        skill_row.parse_skill_url("https://raw.githubusercontent.com/owner/repo/main/SKILL.md")
+        dictionary.parse_skill_url("https://raw.githubusercontent.com/owner/repo/main/SKILL.md")
 
     def assert_rejected(self, url):
         with self.assertRaises(ValueError):
-            skill_row.parse_skill_url(url)
+            dictionary.parse_skill_url(url)
 
     def test_rejects_other_domains(self):
         self.assert_rejected("https://gitlab.com/o/r/blob/main/SKILL.md")
@@ -93,9 +93,9 @@ class TestParseSkillUrl(unittest.TestCase):
         self.assert_rejected("http://github.com/o/r/blob/main/SKILL.md")
 
     def test_accepts_any_markdown_filename_case_insensitive(self):
-        skill_row.parse_skill_url("https://github.com/o/r/blob/main/skills/x/skill.md")
-        skill_row.parse_skill_url("https://github.com/o/r/blob/main/my-skill.MD")
-        skill_row.parse_skill_url("https://github.com/o/r/blob/main/README.md")
+        dictionary.parse_skill_url("https://github.com/o/r/blob/main/skills/x/skill.md")
+        dictionary.parse_skill_url("https://github.com/o/r/blob/main/my-skill.MD")
+        dictionary.parse_skill_url("https://github.com/o/r/blob/main/README.md")
 
     def test_rejects_non_markdown_target(self):
         self.assert_rejected("https://github.com/o/r/tree/main/skills/x")
@@ -121,7 +121,7 @@ class TestParseSkillUrl(unittest.TestCase):
 
     def test_repo_web_url_any_markdown_name(self):
         self.assertEqual(
-            skill_row.repo_web_url("https://github.com/o/r/blob/main/skills/x/my-skill.md"),
+            dictionary.repo_web_url("https://github.com/o/r/blob/main/skills/x/my-skill.md"),
             ("o/r", "https://github.com/o/r/tree/main/skills/x"),
         )
 
@@ -136,20 +136,20 @@ class TestIssueBody(unittest.TestCase):
     )
 
     def test_parse_fields(self):
-        f = skill_row.parse_issue_body(self.BODY)
+        f = dictionary.parse_issue_body(self.BODY)
         self.assertEqual(f["SKILL.md URL"], "https://github.com/o/r/blob/main/SKILL.md")
         self.assertEqual(f["Category"], "🧪 Testing")
         self.assertIsNone(f["Trigger (optional — defaults to auto)"])
 
     def test_unanswered_dropdown_renders_as_None_string(self):
         body = "### Trigger (optional \u2014 defaults to auto)\n\nNone\n"
-        f = skill_row.parse_issue_body(body)
+        f = dictionary.parse_issue_body(body)
         self.assertIsNone(f["Trigger (optional \u2014 defaults to auto)"])
 
     def test_agents_cell(self):
-        self.assertEqual(skill_row.agents_cell("CC, CX"), "CC · CX")
-        self.assertEqual(skill_row.agents_cell("✅ any"), "✅ any")
-        self.assertEqual(skill_row.agents_cell("✅ any, CC"), "✅ any")
+        self.assertEqual(dictionary.agents_cell("CC, CX"), "CC · CX")
+        self.assertEqual(dictionary.agents_cell("✅ any"), "✅ any")
+        self.assertEqual(dictionary.agents_cell("✅ any, CC"), "✅ any")
 
 
 SAMPLE_README = """# Title
@@ -179,7 +179,7 @@ class TestInsertRow(unittest.TestCase):
     ROW = "| mid | M | auto | ✅ any | ~2k / ~60 | stable | MIT | [r](https://github.com/m/r) |"
 
     def test_sorted_insert(self):
-        out = skill_row.insert_row(SAMPLE_README, "🧪 Testing", self.ROW, "mid", "2026-08")
+        out = dictionary.insert_row(SAMPLE_README, "🧪 Testing", self.ROW, "mid", "2026-08")
         lines = out.splitlines()
         names = [l.split("|")[1].strip() for l in lines if l.startswith("| ") and not l.startswith("| Skill") and not l.startswith("| ---")]
         self.assertEqual(names, ["alpha", "mid", "zeta"])
@@ -187,12 +187,12 @@ class TestInsertRow(unittest.TestCase):
     def test_preserves_asof_date(self):
         # Only `remeasure` refreshes costs, so inserting a row must not
         # touch the existing footnote date.
-        out = skill_row.insert_row(SAMPLE_README, "🧪 Testing", self.ROW, "mid", "2026-08")
+        out = dictionary.insert_row(SAMPLE_README, "🧪 Testing", self.ROW, "mid", "2026-08")
         self.assertIn("measured as of 2026-07", out)
         self.assertNotIn("measured as of 2026-08", out)
 
     def test_empty_category_gets_table(self):
-        out = skill_row.insert_row(SAMPLE_README, "🔍 Research", self.ROW, "mid", "2026-08")
+        out = dictionary.insert_row(SAMPLE_README, "🔍 Research", self.ROW, "mid", "2026-08")
         section = out.split("## 🔍 Research")[1].split("## 📦")[0]
         self.assertIn("| Skill | Description |", section)
         self.assertIn("| mid |", section)
@@ -201,32 +201,32 @@ class TestInsertRow(unittest.TestCase):
 
     def test_duplicate_name_raises(self):
         with self.assertRaises(ValueError):
-            skill_row.insert_row(SAMPLE_README, "🧪 Testing", self.ROW.replace("mid", "alpha"), "alpha", "2026-08")
+            dictionary.insert_row(SAMPLE_README, "🧪 Testing", self.ROW.replace("mid", "alpha"), "alpha", "2026-08")
 
     def test_unknown_category_raises(self):
         with self.assertRaises(ValueError):
-            skill_row.insert_row(SAMPLE_README, "🚀 Nope", self.ROW, "mid", "2026-08")
+            dictionary.insert_row(SAMPLE_README, "🚀 Nope", self.ROW, "mid", "2026-08")
 
     def test_cross_category_duplicate_raises(self):
         # "alpha" already exists in "🧪 Testing"; inserting into "🔍 Research" must also raise
         row = self.ROW.replace("mid", "alpha")
         with self.assertRaises(ValueError):
-            skill_row.insert_row(SAMPLE_README, "🔍 Research", row, "alpha", "2026-08")
+            dictionary.insert_row(SAMPLE_README, "🔍 Research", row, "alpha", "2026-08")
 
     def test_insert_is_pure_row_addition(self):
-        out = skill_row.insert_row(SAMPLE_README, "🧪 Testing", self.ROW, "mid", "2026-08")
+        out = dictionary.insert_row(SAMPLE_README, "🧪 Testing", self.ROW, "mid", "2026-08")
         self.assertEqual(out.replace(self.ROW + "\n", ""), SAMPLE_README)
 
 
 class TestRegistryAndReplace(unittest.TestCase):
     def test_replace_cost_cell(self):
         row = "| alpha | A | auto | ✅ any | ~1k / ~50 | stable | MIT | [r](u) |"
-        out = skill_row.replace_cost_cell(row, "~3k / ~90")
+        out = dictionary.replace_cost_cell(row, "~3k / ~90")
         self.assertEqual(out, "| alpha | A | auto | ✅ any | ~3k / ~90 | stable | MIT | [r](u) |")
 
     def test_update_sources(self):
         reg = {}
-        skill_row.update_sources(reg, "my-skill", "https://raw.githubusercontent.com/o/r/main/SKILL.md", "🧪 Testing")
+        dictionary.update_sources(reg, "my-skill", "https://raw.githubusercontent.com/o/r/main/SKILL.md", "🧪 Testing")
         self.assertEqual(reg["my-skill"]["category"], "🧪 Testing")
 
 
@@ -234,38 +234,38 @@ class TestRemeasureText(unittest.TestCase):
     def test_remeasure_updates_row_and_date(self):
         fetched = {"https://raw.x/SKILL.md": "---\nname: alpha\ndescription: A\n---\n" + ("w " * 2000)}
         registry = {"alpha": {"url": "https://raw.x/SKILL.md", "category": "🧪 Testing"}}
-        out = skill_row.remeasure_text(SAMPLE_README, registry, "2026-09", fetcher=fetched.get)
+        out = dictionary.remeasure_text(SAMPLE_README, registry, "2026-09", fetcher=fetched.get)
         row = next(l for l in out.splitlines() if l.startswith("| alpha |"))
         self.assertIn("~2.6k", row)
         self.assertIn("measured as of 2026-09", out)
 
     def test_missing_skill_skipped(self):
         registry = {"ghost": {"url": "https://raw.x/S.md", "category": "🧪 Testing"}}
-        out = skill_row.remeasure_text(SAMPLE_README, registry, "2026-09", fetcher=lambda u: None)
+        out = dictionary.remeasure_text(SAMPLE_README, registry, "2026-09", fetcher=lambda u: None)
         self.assertEqual(out, SAMPLE_README)
 
     def test_missing_category_no_crash(self):
         """Registry entry pointing to non-existent category must not raise."""
         fetched = {"https://raw.x/SKILL.md": "---\nname: alpha\ndescription: A\n---\n" + ("w " * 2000)}
         registry = {"alpha": {"url": "https://raw.x/SKILL.md", "category": "🚀 Nonexistent"}}
-        out = skill_row.remeasure_text(SAMPLE_README, registry, "2026-09", fetcher=fetched.get)
+        out = dictionary.remeasure_text(SAMPLE_README, registry, "2026-09", fetcher=fetched.get)
         self.assertTrue(any(l.startswith("| alpha |") for l in out.splitlines()))
 
 
 class TestCleanCell(unittest.TestCase):
     def test_pipe_escaped_and_newline_collapsed(self):
-        self.assertEqual(skill_row.clean_cell("a |\nb"), "a \\| b")
+        self.assertEqual(dictionary.clean_cell("a |\nb"), "a \\| b")
 
     def test_strips_leading_trailing_whitespace(self):
-        self.assertEqual(skill_row.clean_cell("  hello  "), "hello")
+        self.assertEqual(dictionary.clean_cell("  hello  "), "hello")
 
     def test_multiple_spaces_collapsed(self):
-        self.assertEqual(skill_row.clean_cell("a  b   c"), "a b c")
+        self.assertEqual(dictionary.clean_cell("a  b   c"), "a b c")
 
 
 class TestBuildRowCleaning(unittest.TestCase):
     def test_description_cleaned(self):
-        row = skill_row.build_row(
+        row = dictionary.build_row(
             "skill", "x | y\nz", "auto", "✅ any", "~1k / ~10", "stable", "MIT",
             "o/r", "https://github.com/o/r",
         )
@@ -273,7 +273,7 @@ class TestBuildRowCleaning(unittest.TestCase):
 
     def test_non_github_url_raises(self):
         with self.assertRaises(ValueError):
-            skill_row.build_row(
+            dictionary.build_row(
                 "skill", "desc", "auto", "✅ any", "~1k / ~10", "stable", "MIT",
                 "o/r", "https://evil.com/o/r",
             )
@@ -282,22 +282,22 @@ class TestBuildRowCleaning(unittest.TestCase):
 class TestValidateFields(unittest.TestCase):
     def test_bad_category_raises(self):
         with self.assertRaises(ValueError):
-            skill_row.validate_fields("🚀 Nope", "CC", "stable", "auto")
+            dictionary.validate_fields("🚀 Nope", "CC", "stable", "auto")
 
     def test_bad_agent_raises(self):
         with self.assertRaises(ValueError):
-            skill_row.validate_fields("🧪 Testing", "ZZ", "stable", "auto")
+            dictionary.validate_fields("🧪 Testing", "ZZ", "stable", "auto")
 
     def test_bad_maturity_raises(self):
         with self.assertRaises(ValueError):
-            skill_row.validate_fields("🧪 Testing", "CC", "legacy", "auto")
+            dictionary.validate_fields("🧪 Testing", "CC", "legacy", "auto")
 
     def test_bad_trigger_raises(self):
         with self.assertRaises(ValueError):
-            skill_row.validate_fields("🧪 Testing", "CC", "stable", "weekly")
+            dictionary.validate_fields("🧪 Testing", "CC", "stable", "weekly")
 
     def test_valid_fields_no_raise(self):
-        skill_row.validate_fields("🧪 Testing", "CC, CX", "stable", "auto")
+        dictionary.validate_fields("🧪 Testing", "CC, CX", "stable", "auto")
 
 
 SAMPLE_COLLECTIONS = """## 📦 Skill Collections & Registries
@@ -326,12 +326,12 @@ Intro text.
 
 class TestParseRepoUrl(unittest.TestCase):
     def test_valid(self):
-        self.assertEqual(skill_row.parse_repo_url("https://github.com/owner/repo"), ("owner", "repo"))
-        self.assertEqual(skill_row.parse_repo_url("https://github.com/owner/repo/"), ("owner", "repo"))
+        self.assertEqual(dictionary.parse_repo_url("https://github.com/owner/repo"), ("owner", "repo"))
+        self.assertEqual(dictionary.parse_repo_url("https://github.com/owner/repo/"), ("owner", "repo"))
 
     def assert_rejected(self, url):
         with self.assertRaises(ValueError):
-            skill_row.parse_repo_url(url)
+            dictionary.parse_repo_url(url)
 
     def test_rejects_extra_path(self):
         self.assert_rejected("https://github.com/o/r/tree/main")
@@ -359,60 +359,60 @@ def _http_error(code):
 
 class TestEnsureRepoExists(unittest.TestCase):
     def test_existing_repo_no_raise(self):
-        skill_row.ensure_repo_exists("o/r", fetcher=lambda u: "{}")
+        dictionary.ensure_repo_exists("o/r", fetcher=lambda u: "{}")
 
     def test_404_raises_value_error(self):
         def fetcher(u):
             raise _http_error(404)
         with self.assertRaises(ValueError):
-            skill_row.ensure_repo_exists("o/ghost", fetcher=fetcher)
+            dictionary.ensure_repo_exists("o/ghost", fetcher=fetcher)
 
     def test_other_http_errors_propagate(self):
         # Rate limit / outage must fail the workflow, not read as "not found"
         def fetcher(u):
             raise _http_error(403)
         with self.assertRaises(urllib.error.HTTPError):
-            skill_row.ensure_repo_exists("o/r", fetcher=fetcher)
+            dictionary.ensure_repo_exists("o/r", fetcher=fetcher)
 
     def test_queries_repos_api(self):
         seen = []
-        skill_row.ensure_repo_exists("o/r", fetcher=lambda u: seen.append(u) or "{}")
+        dictionary.ensure_repo_exists("o/r", fetcher=lambda u: seen.append(u) or "{}")
         self.assertEqual(seen, ["https://api.github.com/repos/o/r"])
 
 
 class TestDetectLicense(unittest.TestCase):
     def test_spdx_id_returned(self):
         fetcher = lambda u: '{"license": {"spdx_id": "MIT"}}'
-        self.assertEqual(skill_row.detect_license("o/r", fetcher=fetcher), "MIT")
+        self.assertEqual(dictionary.detect_license("o/r", fetcher=fetcher), "MIT")
 
     def test_noassertion_becomes_dash(self):
         fetcher = lambda u: '{"license": {"spdx_id": "NOASSERTION"}}'
-        self.assertEqual(skill_row.detect_license("o/r", fetcher=fetcher), "—")
+        self.assertEqual(dictionary.detect_license("o/r", fetcher=fetcher), "—")
 
     def test_404_means_no_license(self):
         def fetcher(u):
             raise _http_error(404)
-        self.assertEqual(skill_row.detect_license("o/r", fetcher=fetcher), "—")
+        self.assertEqual(dictionary.detect_license("o/r", fetcher=fetcher), "—")
 
     def test_other_http_errors_propagate(self):
         # Rate limit must fail the workflow, not silently mint "—"
         def fetcher(u):
             raise _http_error(403)
         with self.assertRaises(urllib.error.HTTPError):
-            skill_row.detect_license("o/r", fetcher=fetcher)
+            dictionary.detect_license("o/r", fetcher=fetcher)
 
 
 class TestStarsBadge(unittest.TestCase):
     def test_badge(self):
         self.assertEqual(
-            skill_row.stars_badge("o/r"),
+            dictionary.stars_badge("o/r"),
             "![Stars](https://img.shields.io/github/stars/o/r?style=flat-square&label=%E2%AD%90)",
         )
 
 
 class TestBuildCollectionRows(unittest.TestCase):
     def test_collection_row_shape(self):
-        row = skill_row.build_collection_row("o/r", "Does | things", "MIT")
+        row = dictionary.build_collection_row("o/r", "Does | things", "MIT")
         self.assertEqual(
             row,
             "| o/r | Does \\| things "
@@ -421,7 +421,7 @@ class TestBuildCollectionRows(unittest.TestCase):
         )
 
     def test_registry_row_shape(self):
-        row = skill_row.build_registry_row("r (o)", "registry", "o/r")
+        row = dictionary.build_registry_row("r (o)", "registry", "o/r")
         self.assertEqual(
             row,
             "| r (o) | registry "
@@ -432,47 +432,47 @@ class TestBuildCollectionRows(unittest.TestCase):
 
 class TestInsertCollectionRow(unittest.TestCase):
     def test_sorted_insert_collections(self):
-        row = skill_row.build_collection_row("m/mid", "Mid", "MIT")
-        out = skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "m/mid")
+        row = dictionary.build_collection_row("m/mid", "Mid", "MIT")
+        out = dictionary.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "m/mid")
         section = out.split("### Collections")[1].split("### Registries")[0]
         names = [l.split("|")[1].strip() for l in section.splitlines()
                  if l.startswith("| ") and not l.startswith(("| Repo |", "| ---"))]
         self.assertEqual(names, ["a/alpha", "m/mid", "z/zeta"])
 
     def test_insert_does_not_leak_into_registries(self):
-        row = skill_row.build_collection_row("zz/last", "Last of all", "MIT")
-        out = skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "zz/last")
+        row = dictionary.build_collection_row("zz/last", "Last of all", "MIT")
+        out = dictionary.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "zz/last")
         self.assertLess(out.find("| zz/last |"), out.find("### Registries & lists"))
 
     def test_sorted_insert_registries(self):
-        row = skill_row.build_registry_row("blist (b)", "registry", "b/blist")
-        out = skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Registries & lists", row, "blist (b)")
+        row = dictionary.build_registry_row("blist (b)", "registry", "b/blist")
+        out = dictionary.insert_collection_row(SAMPLE_COLLECTIONS, "Registries & lists", row, "blist (b)")
         section = out.split("### Registries & lists")[1].split("## Contributing")[0]
         names = [l.split("|")[1].strip() for l in section.splitlines()
                  if l.startswith("| ") and not l.startswith(("| Name |", "| ---"))]
         self.assertEqual(names, ["alist (a)", "blist (b)", "WebHub"])
 
     def test_duplicate_raises(self):
-        row = skill_row.build_collection_row("a/alpha", "Dup", "MIT")
+        row = dictionary.build_collection_row("a/alpha", "Dup", "MIT")
         with self.assertRaises(ValueError):
-            skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "a/alpha")
+            dictionary.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "a/alpha")
 
     def test_duplicate_case_insensitive(self):
-        row = skill_row.build_collection_row("A/Alpha", "Dup", "MIT")
+        row = dictionary.build_collection_row("A/Alpha", "Dup", "MIT")
         with self.assertRaises(ValueError):
-            skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "A/Alpha")
+            dictionary.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "A/Alpha")
 
     def test_unknown_table_raises(self):
         with self.assertRaises(ValueError):
-            skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Nope", "| x |", "x")
+            dictionary.insert_collection_row(SAMPLE_COLLECTIONS, "Nope", "| x |", "x")
 
     def test_missing_heading_raises(self):
         with self.assertRaises(ValueError):
-            skill_row.insert_collection_row("# Empty\n", "Collections", "| x |", "x")
+            dictionary.insert_collection_row("# Empty\n", "Collections", "| x |", "x")
 
     def test_preserves_blank_lines_around_table(self):
-        row = skill_row.build_collection_row("m/mid", "Mid", "MIT")
-        out = skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "m/mid")
+        row = dictionary.build_collection_row("m/mid", "Mid", "MIT")
+        out = dictionary.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "m/mid")
         self.assertIn("*Footnote.*\n\n### Registries & lists", out)
         self.assertEqual(out.replace(row + "\n", ""), SAMPLE_COLLECTIONS)
 

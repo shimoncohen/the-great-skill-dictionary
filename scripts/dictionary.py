@@ -5,6 +5,7 @@ Stdlib only. Commands:
   add-collection  --issue-body FILE                  (collections/registries issue-form body)
   remeasure       --date YYYY-MM                     (refresh costs from skill-sources.json)
 """
+import argparse
 import json
 import os
 import re
@@ -497,16 +498,27 @@ def cmd_remeasure(date):
 
 
 def main(argv):
-    args = dict(zip(argv[2::2], argv[3::2]))
-    if argv[1] == "add":
-        cmd_add(args["--issue-body"], args["--date"])
-    elif argv[1] == "add-collection":
-        cmd_add_collection(args["--issue-body"])
-    elif argv[1] == "remeasure":
-        cmd_remeasure(args["--date"])
+    parser = argparse.ArgumentParser(prog="dictionary.py", description=__doc__)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p_add = sub.add_parser("add", help="add a skill row from an issue-form body")
+    p_add.add_argument("--issue-body", required=True, help="file containing the issue body")
+    p_add.add_argument("--date", required=True, help="as-of date, YYYY-MM")
+
+    p_coll = sub.add_parser("add-collection", help="add a collection/registry row from an issue-form body")
+    p_coll.add_argument("--issue-body", required=True, help="file containing the issue body")
+
+    p_rem = sub.add_parser("remeasure", help="refresh token costs from skill-sources.json")
+    p_rem.add_argument("--date", required=True, help="as-of date, YYYY-MM")
+
+    args = parser.parse_args(argv)
+    if args.command == "add":
+        cmd_add(args.issue_body, args.date)
+    elif args.command == "add-collection":
+        cmd_add_collection(args.issue_body)
     else:
-        raise SystemExit(f"unknown command: {argv[1]}")
+        cmd_remeasure(args.date)
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main(sys.argv[1:])

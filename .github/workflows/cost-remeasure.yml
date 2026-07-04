@@ -15,12 +15,12 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Run tests
-        run: python3 -m unittest tests.test_skill_row
+        run: python3 -m unittest tests.test_dictionary
 
       - name: Re-measure token costs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 scripts/skill_row.py remeasure --date "$(date -u +%Y-%m)"
+        run: python3 scripts/dictionary.py remeasure --date "$(date -u +%Y-%m)"
 
       - name: Create pull request
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
