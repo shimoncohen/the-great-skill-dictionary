@@ -9,6 +9,7 @@ import json
 import os
 import re
 import sys
+import urllib.error
 import urllib.request
 from urllib.parse import urlsplit
 
@@ -203,6 +204,23 @@ def fetch(url):
         return resp.read(2_000_000).decode("utf-8")
 
 
+def ensure_repo_exists(owner_repo, fetcher=None):
+    """Fail loudly when the repository does not exist on GitHub.
+
+    Called only with an already-validated owner/repo (parse_skill_url or
+    parse_repo_url), so the API URL is built from trusted parts. A 404 raises
+    ValueError (clear submission error); other API failures (rate limit,
+    outage) propagate so the workflow fails visibly instead of minting a row
+    for a repo nobody checked."""
+    fetcher = fetcher or fetch
+    try:
+        fetcher(f"https://api.github.com/repos/{owner_repo}")
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            raise ValueError(f"repository not found on GitHub: {owner_repo}") from e
+        raise
+
+
 def detect_license(owner_repo):
     try:
         data = json.loads(fetch(f"https://api.github.com/repos/{owner_repo}/license"))
@@ -355,10 +373,11 @@ def cmd_add(issue_body_file, date):
     trigger = fields.get(trigger_key) or "auto"
     validate_fields(category, fields["Agents tested"], fields["Maturity"], trigger)
     raw_url = to_raw_url(url)  # parse_skill_url inside rejects non-GitHub URLs before any fetch
+    owner_repo, dir_url = repo_web_url(raw_url)
+    ensure_repo_exists(owner_repo)
     skill_md = fetch(raw_url)
     fm = parse_frontmatter(skill_md)
     name = clean_cell(fm["name"])  # normalize once; row, dup check, and registry all use the same form
-    owner_repo, dir_url = repo_web_url(raw_url)
     cost = cost_cell(estimate_tokens(skill_md), estimate_tokens(fm["name"] + " " + fm["description"]))
     row = build_row(
         name, fm["description"].rstrip("."), trigger,
@@ -380,6 +399,7 @@ def cmd_add_collection(issue_body_file):
     table = fields.get("Table")
     owner, repo = parse_repo_url(url)  # rejects non-GitHub URLs before any fetch
     owner_repo = f"{owner}/{repo}"
+    ensure_repo_exists(owner_repo)
     if table == "Collections":
         description = fields.get("Description")
         if not description:

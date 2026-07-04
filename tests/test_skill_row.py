@@ -1,4 +1,5 @@
 import unittest
+import urllib.error
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 import skill_row
@@ -355,6 +356,33 @@ class TestParseRepoUrl(unittest.TestCase):
         self.assert_rejected("https://github.com/o/r.git")
         self.assert_rejected("https://github.com/o/..")
         self.assert_rejected("https://github.com/o?x/r")
+
+
+def _http_error(code):
+    return urllib.error.HTTPError("https://api.github.com/repos/o/r", code, "err", None, None)
+
+
+class TestEnsureRepoExists(unittest.TestCase):
+    def test_existing_repo_no_raise(self):
+        skill_row.ensure_repo_exists("o/r", fetcher=lambda u: "{}")
+
+    def test_404_raises_value_error(self):
+        def fetcher(u):
+            raise _http_error(404)
+        with self.assertRaises(ValueError):
+            skill_row.ensure_repo_exists("o/ghost", fetcher=fetcher)
+
+    def test_other_http_errors_propagate(self):
+        # Rate limit / outage must fail the workflow, not read as "not found"
+        def fetcher(u):
+            raise _http_error(403)
+        with self.assertRaises(urllib.error.HTTPError):
+            skill_row.ensure_repo_exists("o/r", fetcher=fetcher)
+
+    def test_queries_repos_api(self):
+        seen = []
+        skill_row.ensure_repo_exists("o/r", fetcher=lambda u: seen.append(u) or "{}")
+        self.assertEqual(seen, ["https://api.github.com/repos/o/r"])
 
 
 class TestStarsBadge(unittest.TestCase):
