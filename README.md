@@ -228,6 +228,7 @@ For further discovery and research. Skills found here are candidates for their o
 | Name | Type | Stars | Link |
 | --- | --- | --- | --- |
 | awesome-agent-skills (heilcheng) | awesome-list | ![Stars](https://img.shields.io/github/stars/heilcheng/awesome-agent-skills?style=flat-square&label=%E2%AD%90) | [GitHub](https://github.com/heilcheng/awesome-agent-skills) |
+| awesome-agent-skills (VoltAgent) | awesome-list | ![Stars](https://img.shields.io/github/stars/VoltAgent/awesome-agent-skills?style=flat-square&label=%E2%AD%90) | [GitHub](https://github.com/VoltAgent/awesome-agent-skills) |
 | awesome-claude-skills (travisvn) | awesome-list | ![Stars](https://img.shields.io/github/stars/travisvn/awesome-claude-skills?style=flat-square&label=%E2%AD%90) | [GitHub](https://github.com/travisvn/awesome-claude-skills) |
 | SkillHub | marketplace | — | [skillhub.club](https://www.skillhub.club/) |
 | skills.sh | registry | — | [skills.sh](https://www.skills.sh/) |
