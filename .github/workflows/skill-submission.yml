@@ -25,9 +25,14 @@ jobs:
   add-skill:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.issue.labels.*.name, 'skill-submission') || contains(github.event.issue.labels.*.name, 'collection-submission')
     runs-on: ubuntu-latest
+    # Global group serializes ALL submission runs: each builds its branch
+    # from post-merge main, so concurrent submissions cannot race the
+    # auto-merge ("Base branch was modified"). The duplicate opened+labeled
+    # event pair queues a second run that the branch/PR guard turns into a
+    # no-op.
     concurrency:
-      group: skill-submission-${{ github.event.issue.number || inputs.issue_number }}
-      cancel-in-progress: true
+      group: submission
+      cancel-in-progress: false
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       REPO: ${{ github.repository }}
@@ -128,25 +133,17 @@ jobs:
       # submissions only) — stars come from the GitHub API, and the free-text
       # description must be plain prose. Fresh PRs only: regenerated PRs
       # ('updated') keep whatever review state they had.
-      # Concurrent submissions race: the first merge moves main, and GitHub
-      # then rejects the others with "Base branch was modified" (and the
-      # GITHUB_TOKEN merge cannot trigger regenerate-submissions to rebuild
-      # them). Update the branch and retry; a real table conflict surfaces as
-      # a failure for a maintainer after the retries run out.
+      # Safe to merge directly: the global concurrency group serializes
+      # submission runs, so main cannot move underneath this PR. A failure
+      # here (e.g. a human pushed to main mid-run) falls through to the
+      # failure comment for a maintainer.
       - name: Auto-merge popular collection
         if: steps.pr.outputs.pull-request-operation == 'created' && steps.add.outputs.automerge == 'true'
         env:
           PR_URL: ${{ steps.pr.outputs.pull-request-url }}
           STARS: ${{ steps.add.outputs.stars }}
         run: |
-          merged=false
-          for attempt in 1 2 3 4; do
-            if gh pr merge "$PR_URL" --repo "$REPO" --squash; then merged=true; break; fi
-            echo "merge attempt $attempt failed; updating branch and retrying"
-            gh pr update-branch "$PR_URL" --repo "$REPO" || true
-            sleep $((attempt * 10))
-          done
-          [ "$merged" = true ]
+          gh pr merge "$PR_URL" --repo "$REPO" --squash
           gh issue comment "$ISSUE" --repo "$REPO" --body "Auto-merged $PR_URL — repository has $STARS stars (threshold: 1000)."
 
       - name: Comment on issue
