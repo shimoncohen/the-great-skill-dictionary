@@ -21,6 +21,11 @@ class TestFrontmatter(unittest.TestCase):
         fm = skill_row.parse_frontmatter(text)
         self.assertEqual(fm["description"], "Use when: always")
 
+    def test_folded_scalar_description(self):
+        text = "---\nname: x\ndescription: >-\n  line one\n  line two\n---\nbody"
+        fm = skill_row.parse_frontmatter(text)
+        self.assertEqual(fm["description"], "line one line two")
+
 
 class TestTokens(unittest.TestCase):
     def test_estimate_words_times_1_3(self):
@@ -29,6 +34,9 @@ class TestTokens(unittest.TestCase):
 
     def test_format_small_rounds_to_ten(self):
         self.assertEqual(skill_row.format_tokens(143), "~140")
+
+    def test_format_tokens_3_returns_ten(self):
+        self.assertEqual(skill_row.format_tokens(3), "~10")
 
     def test_format_k(self):
         self.assertEqual(skill_row.format_tokens(2100), "~2.1k")
@@ -199,6 +207,16 @@ class TestInsertRow(unittest.TestCase):
         with self.assertRaises(ValueError):
             skill_row.insert_row(SAMPLE_README, "🚀 Nope", self.ROW, "mid", "2026-08")
 
+    def test_cross_category_duplicate_raises(self):
+        # "alpha" already exists in "🧪 Testing"; inserting into "🔍 Research" must also raise
+        row = self.ROW.replace("mid", "alpha")
+        with self.assertRaises(ValueError):
+            skill_row.insert_row(SAMPLE_README, "🔍 Research", row, "alpha", "2026-08")
+
+    def test_insert_is_pure_row_addition(self):
+        out = skill_row.insert_row(SAMPLE_README, "🧪 Testing", self.ROW, "mid", "2026-08")
+        self.assertEqual(out.replace(self.ROW + "\n", ""), SAMPLE_README)
+
 
 class TestRegistryAndReplace(unittest.TestCase):
     def test_replace_cost_cell(self):
@@ -225,6 +243,13 @@ class TestRemeasureText(unittest.TestCase):
         registry = {"ghost": {"url": "https://raw.x/S.md", "category": "🧪 Testing"}}
         out = skill_row.remeasure_text(SAMPLE_README, registry, "2026-09", fetcher=lambda u: None)
         self.assertEqual(out, SAMPLE_README)
+
+    def test_missing_category_no_crash(self):
+        """Registry entry pointing to non-existent category must not raise."""
+        fetched = {"https://raw.x/SKILL.md": "---\nname: alpha\ndescription: A\n---\n" + ("w " * 2000)}
+        registry = {"alpha": {"url": "https://raw.x/SKILL.md", "category": "🚀 Nonexistent"}}
+        out = skill_row.remeasure_text(SAMPLE_README, registry, "2026-09", fetcher=fetched.get)
+        self.assertTrue(any(l.startswith("| alpha |") for l in out.splitlines()))
 
 
 class TestCleanCell(unittest.TestCase):
@@ -254,26 +279,6 @@ class TestBuildRowCleaning(unittest.TestCase):
             )
 
 
-class TestFrontmatterBlockScalar(unittest.TestCase):
-    def test_folded_scalar_description(self):
-        text = "---\nname: x\ndescription: >-\n  line one\n  line two\n---\nbody"
-        fm = skill_row.parse_frontmatter(text)
-        self.assertEqual(fm["description"], "line one line two")
-
-
-class TestInsertRowCrossCategoryDuplicate(unittest.TestCase):
-    def test_cross_category_duplicate_raises(self):
-        # "alpha" already exists in "🧪 Testing"; inserting into "🔍 Research" must also raise
-        row = "| alpha | A | auto | ✅ any | ~1k / ~10 | stable | MIT | [r](https://github.com/a/r) |"
-        with self.assertRaises(ValueError):
-            skill_row.insert_row(SAMPLE_README, "🔍 Research", row, "alpha", "2026-08")
-
-
-class TestFormatTokensSmall(unittest.TestCase):
-    def test_format_tokens_3_returns_ten(self):
-        self.assertEqual(skill_row.format_tokens(3), "~10")
-
-
 class TestValidateFields(unittest.TestCase):
     def test_bad_category_raises(self):
         with self.assertRaises(ValueError):
@@ -293,16 +298,6 @@ class TestValidateFields(unittest.TestCase):
 
     def test_valid_fields_no_raise(self):
         skill_row.validate_fields("🧪 Testing", "CC, CX", "stable", "auto")
-
-
-class TestRemeasureMissingCategory(unittest.TestCase):
-    def test_missing_category_no_crash(self):
-        """Registry entry pointing to non-existent category must not raise."""
-        fetched = {"https://raw.x/SKILL.md": "---\nname: alpha\ndescription: A\n---\n" + ("w " * 2000)}
-        registry = {"alpha": {"url": "https://raw.x/SKILL.md", "category": "🚀 Nonexistent"}}
-        # Must not raise even though the category heading does not exist in SAMPLE_README
-        out = skill_row.remeasure_text(SAMPLE_README, registry, "2026-09", fetcher=fetched.get)
-        self.assertTrue(any(l.startswith("| alpha |") for l in out.splitlines()))
 
 
 SAMPLE_COLLECTIONS = """## 📦 Skill Collections & Registries
@@ -385,6 +380,28 @@ class TestEnsureRepoExists(unittest.TestCase):
         self.assertEqual(seen, ["https://api.github.com/repos/o/r"])
 
 
+class TestDetectLicense(unittest.TestCase):
+    def test_spdx_id_returned(self):
+        fetcher = lambda u: '{"license": {"spdx_id": "MIT"}}'
+        self.assertEqual(skill_row.detect_license("o/r", fetcher=fetcher), "MIT")
+
+    def test_noassertion_becomes_dash(self):
+        fetcher = lambda u: '{"license": {"spdx_id": "NOASSERTION"}}'
+        self.assertEqual(skill_row.detect_license("o/r", fetcher=fetcher), "—")
+
+    def test_404_means_no_license(self):
+        def fetcher(u):
+            raise _http_error(404)
+        self.assertEqual(skill_row.detect_license("o/r", fetcher=fetcher), "—")
+
+    def test_other_http_errors_propagate(self):
+        # Rate limit must fail the workflow, not silently mint "—"
+        def fetcher(u):
+            raise _http_error(403)
+        with self.assertRaises(urllib.error.HTTPError):
+            skill_row.detect_license("o/r", fetcher=fetcher)
+
+
 class TestStarsBadge(unittest.TestCase):
     def test_badge(self):
         self.assertEqual(
@@ -458,13 +475,6 @@ class TestInsertCollectionRow(unittest.TestCase):
         out = skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "m/mid")
         self.assertIn("*Footnote.*\n\n### Registries & lists", out)
         self.assertEqual(out.replace(row + "\n", ""), SAMPLE_COLLECTIONS)
-
-
-class TestInsertRowPreservesBlankLines(unittest.TestCase):
-    def test_insert_is_pure_row_addition(self):
-        row = "| mid | M | auto | ✅ any | ~2k / ~60 | stable | MIT | [r](https://github.com/m/r) |"
-        out = skill_row.insert_row(SAMPLE_README, "🧪 Testing", row, "mid", "2026-08")
-        self.assertEqual(out.replace(row + "\n", ""), SAMPLE_README)
 
 
 if __name__ == "__main__":

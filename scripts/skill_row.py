@@ -13,6 +13,8 @@ import urllib.error
 import urllib.request
 from urllib.parse import urlsplit
 
+# --- Constants ---------------------------------------------------------------
+
 README = "README.md"
 SOURCES = ".github/skill-sources.json"
 FOOTNOTE_RE = re.compile(r"\*Token counts approximate, measured as of \d{4}-\d{2}\.\*")
@@ -43,6 +45,8 @@ COLLECTION_HEADINGS = {
 REGISTRY_TYPES = {"awesome-list", "registry", "marketplace"}
 
 _BLOCK_SCALAR_INDICATORS = {">", ">-", ">+", "|", "|-", "|+", ""}
+
+# --- Text and issue-body parsing ----------------------------------------------
 
 
 def clean_cell(s):
@@ -78,6 +82,37 @@ def parse_frontmatter(text):
     return fm
 
 
+def parse_issue_body(body):
+    fields = {}
+    for m in re.finditer(r"^### (.+?)\n+(.*?)(?=\n### |\Z)", body, re.S | re.M):
+        value = m.group(2).strip()
+        fields[m.group(1).strip()] = None if value in ("", "_No response_", "None") else value
+    return fields
+
+
+def agents_cell(raw):
+    agents = [a.strip() for a in raw.split(",") if a.strip()]
+    if "✅ any" in agents:
+        return "✅ any"
+    return " · ".join(agents)
+
+
+def validate_fields(category, agents_raw, maturity, trigger):
+    """Validate enum fields; raise ValueError on any mismatch."""
+    if category not in CATEGORIES:
+        raise ValueError(f"unknown category: {category}")
+    for agent in [a.strip() for a in agents_raw.split(",") if a.strip()]:
+        if agent not in AGENT_CODES:
+            raise ValueError(f"unknown agent code: {agent}")
+    if maturity not in MATURITIES:
+        raise ValueError(f"unknown maturity: {maturity}")
+    if trigger not in TRIGGERS:
+        raise ValueError(f"unknown trigger: {trigger}")
+
+
+# --- Token estimation ----------------------------------------------------------
+
+
 def estimate_tokens(text):
     return round(len(text.split()) * 1.3)
 
@@ -97,8 +132,11 @@ def cost_cell(invoke, always_on):
     return f"{format_tokens(invoke)} / {format_tokens(always_on)}"
 
 
-# SECURITY: URLs come from untrusted issue bodies. parse_skill_url runs
-# before any network request; everything it rejects is never fetched.
+# --- URL validation -------------------------------------------------------------
+
+# SECURITY: URLs come from untrusted issue bodies. parse_skill_url and
+# parse_repo_url run before any network request; everything they reject is
+# never fetched.
 _OWNER_RE = re.compile(r"\A[A-Za-z0-9-]{1,39}\Z")
 _REPO_RE = re.compile(r"\A[A-Za-z0-9._-]{1,100}\Z")
 _SEGMENT_RE = re.compile(r"\A[A-Za-z0-9._-]+\Z")
@@ -173,26 +211,7 @@ def parse_repo_url(url):
     return owner, repo
 
 
-def stars_badge(owner_repo):
-    return (
-        f"![Stars](https://img.shields.io/github/stars/{owner_repo}"
-        "?style=flat-square&label=%E2%AD%90)"
-    )
-
-
-def parse_issue_body(body):
-    fields = {}
-    for m in re.finditer(r"^### (.+?)\n+(.*?)(?=\n### |\Z)", body, re.S | re.M):
-        value = m.group(2).strip()
-        fields[m.group(1).strip()] = None if value in ("", "_No response_", "None") else value
-    return fields
-
-
-def agents_cell(raw):
-    agents = [a.strip() for a in raw.split(",") if a.strip()]
-    if "✅ any" in agents:
-        return "✅ any"
-    return " · ".join(agents)
+# --- GitHub API ------------------------------------------------------------------
 
 
 def fetch(url):
@@ -221,54 +240,29 @@ def ensure_repo_exists(owner_repo, fetcher=None):
         raise
 
 
-def detect_license(owner_repo):
+def detect_license(owner_repo, fetcher=None):
+    """SPDX id via the GitHub API; the repo is known to exist by now
+    (ensure_repo_exists ran), so a 404 here means "no license" (—). Other
+    failures (rate limit, outage) propagate rather than minting a wrong —."""
+    fetcher = fetcher or fetch
     try:
-        data = json.loads(fetch(f"https://api.github.com/repos/{owner_repo}/license"))
-        spdx = data.get("license", {}).get("spdx_id")
-        return spdx if spdx and spdx != "NOASSERTION" else "—"
-    except Exception:
-        return "—"
+        data = json.loads(fetcher(f"https://api.github.com/repos/{owner_repo}/license"))
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return "—"
+        raise
+    spdx = data.get("license", {}).get("spdx_id")
+    return spdx if spdx and spdx != "NOASSERTION" else "—"
 
 
-def _split_section(text, category):
-    """Return (before, section, after) for the '## <category>' section."""
-    heading = f"## {category}"
-    idx = text.find(heading + "\n")
-    if idx == -1:
-        raise ValueError(f"category not found in README: {category}")
-    end = text.find("\n## ", idx + len(heading))
-    end = len(text) if end == -1 else end + 1  # keep trailing newline in section
-    return text[:idx], text[idx:end], text[end:]
+# --- Markdown table operations ----------------------------------------------------
 
 
-def insert_row(text, category, row, name, date):
-    # Global duplicate check across the entire README text
-    if any(l.startswith(f"| {name} |") for l in text.splitlines()):
-        raise ValueError(f"skill already listed: {name}")
-    before, section, after = _split_section(text, category)
-    footnote = f"*Token counts approximate, measured as of {date}.*"
-    if PLACEHOLDER in section:
-        section = section.replace(
-            PLACEHOLDER, f"{TABLE_HEADER}\n{row}\n\n{footnote}"
-        )
-    else:
-        # split("\n") (not splitlines) so join round-trips blank lines exactly
-        lines = section.split("\n")
-        rows = [i for i, l in enumerate(lines)
-                if l.startswith("| ") and not l.startswith("| Skill") and not l.startswith("| ---")]
-        if not rows:
-            raise ValueError(f"no table found in category: {category}")
-        pos = rows[-1] + 1
-        for i in rows:
-            if name.lower() < lines[i].split("|")[1].strip().lower():
-                pos = i
-                break
-        lines.insert(pos, row)
-        # Leave the existing footnote date alone: it records when costs were
-        # measured, and only `remeasure` refreshes costs. Also keeps
-        # concurrent submission PRs from all rewriting the same line.
-        section = "\n".join(lines)
-    return before + section + after
+def stars_badge(owner_repo):
+    return (
+        f"![Stars](https://img.shields.io/github/stars/{owner_repo}"
+        "?style=flat-square&label=%E2%AD%90)"
+    )
 
 
 def build_row(name, description, trigger, agents, cost, maturity, license_id, repo_name, repo_url):
@@ -298,6 +292,56 @@ def build_registry_row(name, type_, owner_repo):
     )
 
 
+def _split_section(text, category):
+    """Return (before, section, after) for the '## <category>' section."""
+    heading = f"## {category}"
+    idx = text.find(heading + "\n")
+    if idx == -1:
+        raise ValueError(f"category not found in README: {category}")
+    end = text.find("\n## ", idx + len(heading))
+    end = len(text) if end == -1 else end + 1  # keep trailing newline in section
+    return text[:idx], text[idx:end], text[end:]
+
+
+def _insert_sorted_row(lines, rows, name, row, kind):
+    """Insert row at its alphabetical position (by first cell) among the table
+    rows at indexes `rows`; reject a case-insensitive duplicate. Mutates lines."""
+    for i in rows:
+        if lines[i].split("|")[1].strip().lower() == name.lower():
+            raise ValueError(f"{kind} already listed: {name}")
+    pos = rows[-1] + 1
+    for i in rows:
+        if name.lower() < lines[i].split("|")[1].strip().lower():
+            pos = i
+            break
+    lines.insert(pos, row)
+
+
+def insert_row(text, category, row, name, date):
+    # Global duplicate check across the entire README text
+    if any(l.startswith(f"| {name} |") for l in text.splitlines()):
+        raise ValueError(f"skill already listed: {name}")
+    before, section, after = _split_section(text, category)
+    footnote = f"*Token counts approximate, measured as of {date}.*"
+    if PLACEHOLDER in section:
+        section = section.replace(
+            PLACEHOLDER, f"{TABLE_HEADER}\n{row}\n\n{footnote}"
+        )
+    else:
+        # split("\n") (not splitlines) so join round-trips blank lines exactly
+        lines = section.split("\n")
+        rows = [i for i, l in enumerate(lines)
+                if l.startswith("| ") and not l.startswith("| Skill") and not l.startswith("| ---")]
+        if not rows:
+            raise ValueError(f"no table found in category: {category}")
+        _insert_sorted_row(lines, rows, name, row, "skill")
+        # Leave the existing footnote date alone: it records when costs were
+        # measured, and only `remeasure` refreshes costs. Also keeps
+        # concurrent submission PRs from all rewriting the same line.
+        section = "\n".join(lines)
+    return before + section + after
+
+
 def insert_collection_row(text, table, row, name):
     """Insert a row (sorted by first cell) into a Collections/Registries table."""
     heading = COLLECTION_HEADINGS.get(table)
@@ -309,22 +353,13 @@ def insert_collection_row(text, table, row, name):
     ends = [i for i in (text.find("\n### ", idx + len(heading)),
                         text.find("\n## ", idx + len(heading))) if i != -1]
     end = min(ends) + 1 if ends else len(text)
-    section = text[idx:end]
     # split("\n") (not splitlines) so join round-trips blank lines exactly
-    lines = section.split("\n")
+    lines = text[idx:end].split("\n")
     rows = [i for i, l in enumerate(lines)
             if l.startswith("| ") and not l.startswith(("| Repo |", "| Name |", "| ---"))]
     if not rows:
         raise ValueError(f"no table found under: {heading}")
-    for i in rows:
-        if lines[i].split("|")[1].strip().lower() == name.lower():
-            raise ValueError(f"entry already listed: {name}")
-    pos = rows[-1] + 1
-    for i in rows:
-        if name.lower() < lines[i].split("|")[1].strip().lower():
-            pos = i
-            break
-    lines.insert(pos, row)
+    _insert_sorted_row(lines, rows, name, row, "entry")
     return text[:idx] + "\n".join(lines) + text[end:]
 
 
@@ -332,6 +367,9 @@ def replace_cost_cell(row, new_cost):
     cells = row.split("|")
     cells[5] = f" {new_cost} "
     return "|".join(cells)
+
+
+# --- Sources registry (skill-sources.json) -----------------------------------------
 
 
 def update_sources(registry, name, raw_url, category):
@@ -352,17 +390,7 @@ def _save_sources(registry):
         f.write("\n")
 
 
-def validate_fields(category, agents_raw, maturity, trigger):
-    """Validate enum fields; raise ValueError on any mismatch."""
-    if category not in CATEGORIES:
-        raise ValueError(f"unknown category: {category}")
-    for agent in [a.strip() for a in agents_raw.split(",") if a.strip()]:
-        if agent not in AGENT_CODES:
-            raise ValueError(f"unknown agent code: {agent}")
-    if maturity not in MATURITIES:
-        raise ValueError(f"unknown maturity: {maturity}")
-    if trigger not in TRIGGERS:
-        raise ValueError(f"unknown trigger: {trigger}")
+# --- Commands -----------------------------------------------------------------------
 
 
 def cmd_add(issue_body_file, date):
