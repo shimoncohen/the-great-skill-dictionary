@@ -1,5 +1,10 @@
 # The Great Skill Dictionary
 
+[![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/shimoncohen/the-great-skill-dictionary?style=flat-square)](https://github.com/shimoncohen/the-great-skill-dictionary/commits/main)
+
 A curated dictionary of **agent skills** — portable instruction packages (folders with a `SKILL.md` file) that extend AI coding agents like Claude Code, Codex, Gemini CLI, and Copilot CLI with new capabilities, workflows, and domain knowledge. Skills follow the open [Agent Skills spec](https://agentskills.io/), which is what makes most of them portable across agents.
 
 Unlike existing skill lists, every entry here records **token cost**, **trigger type**, **agent support**, **maturity**, and **license** — so you can judge what a skill costs you before installing it.
@@ -20,6 +25,12 @@ Unlike existing skill lists, every entry here records **token cost**, **trigger 
 | `CP` | GitHub Copilot CLI |
 
 Skills marked with codes are known to work on (or are restricted to) those agents; `✅ any` means the skill is plain instructions with no agent-specific dependencies.
+
+## Reading the tables
+
+- **Trigger** — how the skill activates: `manual` (you run a slash command), `auto` (the agent activates it when relevant), `always-on` (hook or system-level, active every turn).
+- **Cost ~(invoke / always-on)** — approximate token counts: what loading the full skill costs when it activates / what its name + description cost in context every turn. See the [disclaimers](#%EF%B8%8F-disclaimers).
+- **Maturity** — `stable` / `beta` / `experimental` / `archived`, judged from repo activity and docs.
 
 ## Installing skills
 

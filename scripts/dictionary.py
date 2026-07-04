@@ -4,6 +4,7 @@ Stdlib only. Commands:
   add             --issue-body FILE --date YYYY-MM   (reads GitHub issue-form body)
   add-collection  --issue-body FILE                  (collections/registries issue-form body)
   remeasure       --date YYYY-MM                     (refresh costs from skill-sources.json)
+  check                                              (README links, local targets, category TOC)
 """
 import argparse
 import json
@@ -529,6 +530,56 @@ def cmd_remeasure(date):
         open(README, "w").write(new_text)
 
 
+def readme_urls(text):
+    """All https URLs used as markdown link or image targets."""
+    return sorted(set(re.findall(r"\]\((https://[^)\s]+)\)", text)))
+
+
+def readme_local_links(text):
+    """Relative file targets like (CONTRIBUTING.md); skips anchors and the
+    ../../issues/... GitHub web paths, which only resolve on github.com."""
+    return sorted(set(re.findall(r"\]\((?!https?://|#|\.\./)([^)\s]+)\)", text)))
+
+
+def check_readme_text(text, url_ok, file_exists):
+    """Return a list of problems: category headings/TOC entries missing for
+    any CATEGORIES member, broken external links, missing local link targets."""
+    problems = []
+    for cat in sorted(CATEGORIES):
+        if f"## {cat}\n" not in text:
+            problems.append(f"missing category heading: {cat}")
+        if f"[{cat}](#" not in text:
+            problems.append(f"missing TOC entry: {cat}")
+    for path in readme_local_links(text):
+        if not file_exists(path):
+            problems.append(f"missing local link target: {path}")
+    for url in readme_urls(text):
+        if not url_ok(url):
+            problems.append(f"broken link: {url}")
+    return problems
+
+
+def _url_ok(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "skill-dictionary-bot"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return 200 <= resp.status < 400
+    except Exception as e:
+        print(f"  {url}: {e}", file=sys.stderr)
+        return False
+
+
+def cmd_check():
+    text = open(README).read()
+    problems = check_readme_text(text, _url_ok, os.path.exists)
+    for p in problems:
+        print(p, file=sys.stderr)
+    if problems:
+        raise SystemExit(1)
+    print(f"README ok: {len(readme_urls(text))} links, "
+          f"{len(readme_local_links(text))} local targets, {len(CATEGORIES)} categories")
+
+
 def main(argv):
     parser = argparse.ArgumentParser(prog="dictionary.py", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -543,11 +594,15 @@ def main(argv):
     p_rem = sub.add_parser("remeasure", help="refresh token costs from skill-sources.json")
     p_rem.add_argument("--date", required=True, help="as-of date, YYYY-MM")
 
+    sub.add_parser("check", help="verify README links, local targets, and category TOC")
+
     args = parser.parse_args(argv)
     if args.command == "add":
         cmd_add(args.issue_body, args.date)
     elif args.command == "add-collection":
         cmd_add_collection(args.issue_body)
+    elif args.command == "check":
+        cmd_check()
     else:
         cmd_remeasure(args.date)
 

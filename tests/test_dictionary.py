@@ -506,5 +506,51 @@ class TestInsertCollectionRow(unittest.TestCase):
         self.assertEqual(out.replace(row + "\n", ""), SAMPLE_COLLECTIONS)
 
 
+class TestCheckReadme(unittest.TestCase):
+    TEXT = (
+        "- [🧪 Testing](#-testing)\n\n"
+        "## 🧪 Testing\n\n"
+        "See [CONTRIBUTING.md](CONTRIBUTING.md) and [repo](https://github.com/o/r) "
+        "and ![badge](https://img.shields.io/x) and [issue](../../issues/new) and [top](#top).\n"
+    )
+
+    def _check(self, text, url_ok=lambda u: True, file_exists=lambda p: True):
+        # Restrict CATEGORIES to the one used in TEXT for focused assertions
+        orig = dictionary.CATEGORIES
+        dictionary.CATEGORIES = {"🧪 Testing"}
+        try:
+            return dictionary.check_readme_text(text, url_ok, file_exists)
+        finally:
+            dictionary.CATEGORIES = orig
+
+    def test_extracts_link_and_image_urls_only(self):
+        self.assertEqual(
+            dictionary.readme_urls(self.TEXT),
+            ["https://github.com/o/r", "https://img.shields.io/x"],
+        )
+
+    def test_local_links_skip_anchors_and_web_paths(self):
+        self.assertEqual(dictionary.readme_local_links(self.TEXT), ["CONTRIBUTING.md"])
+
+    def test_clean_readme_no_problems(self):
+        self.assertEqual(self._check(self.TEXT), [])
+
+    def test_missing_heading_reported(self):
+        text = self.TEXT.replace("## 🧪 Testing", "## 🧪 Renamed")
+        self.assertIn("missing category heading: 🧪 Testing", self._check(text))
+
+    def test_missing_toc_entry_reported(self):
+        text = self.TEXT.replace("- [🧪 Testing](#-testing)\n\n", "")
+        self.assertIn("missing TOC entry: 🧪 Testing", self._check(text))
+
+    def test_broken_url_reported(self):
+        problems = self._check(self.TEXT, url_ok=lambda u: "shields" not in u)
+        self.assertEqual(problems, ["broken link: https://img.shields.io/x"])
+
+    def test_missing_local_target_reported(self):
+        problems = self._check(self.TEXT, file_exists=lambda p: False)
+        self.assertEqual(problems, ["missing local link target: CONTRIBUTING.md"])
+
+
 if __name__ == "__main__":
     unittest.main()
