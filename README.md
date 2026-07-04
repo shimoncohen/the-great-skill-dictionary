@@ -213,9 +213,11 @@ For further discovery and research. Skills found here are candidates for their o
 
 | Repo | Description | Stars | License | Link |
 | --- | --- | --- | --- | --- |
+| addyosmani/agent-skills | Production-grade engineering skills for AI coding agents from Addy Osmani | ![Stars](https://img.shields.io/github/stars/addyosmani/agent-skills?style=flat-square&label=%E2%AD%90) | MIT | [GitHub](https://github.com/addyosmani/agent-skills) |
 | alirezarezvani/claude-skills | Large community skill pack, explicitly multi-agent portable | ![Stars](https://img.shields.io/github/stars/alirezarezvani/claude-skills?style=flat-square&label=%E2%AD%90) | — | [GitHub](https://github.com/alirezarezvani/claude-skills) |
 | anthropics/skills | Anthropic's official example skills and skill spec template | ![Stars](https://img.shields.io/github/stars/anthropics/skills?style=flat-square&label=%E2%AD%90) | Apache-2.0 / Source-available† | [GitHub](https://github.com/anthropics/skills) |
 | obra/superpowers | Software-engineering methodology pack: TDD, debugging, planning workflows | ![Stars](https://img.shields.io/github/stars/obra/superpowers?style=flat-square&label=%E2%AD%90) | MIT | [GitHub](https://github.com/obra/superpowers) |
+| tech-leads-club/agent-skills | Validated and security-reviewed skill library for professional coding agents | ![Stars](https://img.shields.io/github/stars/tech-leads-club/agent-skills?style=flat-square&label=%E2%AD%90) | — | [GitHub](https://github.com/tech-leads-club/agent-skills) |
 | trailofbits/skills | Security-audit skills from Trail of Bits | ![Stars](https://img.shields.io/github/stars/trailofbits/skills?style=flat-square&label=%E2%AD%90) | CC-BY-SA-4.0 | [GitHub](https://github.com/trailofbits/skills) |
 | vercel-labs/skills | Vercel's skill collection and registry CLI | ![Stars](https://img.shields.io/github/stars/vercel-labs/skills?style=flat-square&label=%E2%AD%90) | MIT | [GitHub](https://github.com/vercel-labs/skills) |
 
