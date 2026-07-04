@@ -105,6 +105,7 @@ Visual design quality, UI component work, and frontend best practices.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | frontend-design | Produces distinctive, production-grade frontend interfaces instead of generic AI styling | auto | ✅ any | ~1.7k / ~40 | stable | Apache-2.0 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/frontend-design) |
 | react-best-practices | React and Next.js performance patterns from the Vercel team | auto | ✅ any | ~1.2k / ~60 | stable | MIT | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices) |
+| theme-factory | Toolkit for styling artifacts with a theme. These artifacts can be slides, docs, reportings, HTML landing pages, etc. There are 10 pre-set themes with colors/fonts that you can apply to any artifact that has been creating, or can generate a new theme on-the-fly | auto | ✅ any | ~630 / ~60 | stable | — | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/theme-factory) |
 
 *Token counts approximate, measured as of 2026-07.*
 
