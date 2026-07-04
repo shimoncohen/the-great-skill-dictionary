@@ -379,6 +379,35 @@ class TestEnsureRepoExists(unittest.TestCase):
         dictionary.ensure_repo_exists("o/r", fetcher=lambda u: seen.append(u) or "{}")
         self.assertEqual(seen, ["https://api.github.com/repos/o/r"])
 
+    def test_returns_parsed_metadata(self):
+        data = dictionary.ensure_repo_exists(
+            "o/r", fetcher=lambda u: '{"stargazers_count": 1234}')
+        self.assertEqual(data["stargazers_count"], 1234)
+
+
+class TestAutomergeEligible(unittest.TestCase):
+    def test_enough_stars_plain_description(self):
+        self.assertTrue(dictionary.automerge_eligible(1000, "Plain prose description"))
+
+    def test_below_threshold_rejected(self):
+        self.assertFalse(dictionary.automerge_eligible(999, "Plain prose"))
+
+    def test_no_description_ok(self):
+        # Registries have no free-text description
+        self.assertTrue(dictionary.automerge_eligible(5000, None))
+
+    def test_markdown_and_html_rejected(self):
+        # Auto-merge publishes the description unreviewed; anything beyond
+        # plain prose must wait for a maintainer.
+        for desc in (
+            "See https://evil.example",
+            "a [link](https://x)",
+            "an ![image](https://x/i.png)",
+            "raw <img src=x>",
+            "code `span`",
+        ):
+            self.assertFalse(dictionary.automerge_eligible(5000, desc), desc)
+
 
 class TestDetectLicense(unittest.TestCase):
     def test_spdx_id_returned(self):

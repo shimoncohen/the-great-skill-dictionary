@@ -45,6 +45,10 @@ COLLECTION_HEADINGS = {
 }
 REGISTRY_TYPES = {"awesome-list", "registry", "marketplace"}
 
+# Collection/registry PRs for repos at or above this star count are merged
+# without maintainer review (the workflow acts on the automerge output).
+AUTO_MERGE_STARS = 1000
+
 _BLOCK_SCALAR_INDICATORS = {">", ">-", ">+", "|", "|-", "|+", ""}
 
 # --- Text and issue-body parsing ----------------------------------------------
@@ -225,7 +229,8 @@ def fetch(url):
 
 
 def ensure_repo_exists(owner_repo, fetcher=None):
-    """Fail loudly when the repository does not exist on GitHub.
+    """Fail loudly when the repository does not exist on GitHub; return its
+    API metadata (dict) when it does.
 
     Called only with an already-validated owner/repo (parse_skill_url or
     parse_repo_url), so the API URL is built from trusted parts. A 404 raises
@@ -234,7 +239,7 @@ def ensure_repo_exists(owner_repo, fetcher=None):
     for a repo nobody checked."""
     fetcher = fetcher or fetch
     try:
-        fetcher(f"https://api.github.com/repos/{owner_repo}")
+        return json.loads(fetcher(f"https://api.github.com/repos/{owner_repo}"))
     except urllib.error.HTTPError as e:
         if e.code == 404:
             raise ValueError(f"repository not found on GitHub: {owner_repo}") from e
@@ -254,6 +259,29 @@ def detect_license(owner_repo, fetcher=None):
         raise
     spdx = data.get("license", {}).get("spdx_id")
     return spdx if spdx and spdx != "NOASSERTION" else "—"
+
+
+def automerge_eligible(stars, description):
+    """Whether a collection/registry PR may merge without maintainer review.
+
+    Stars come from the GitHub API (server-side), never from issue text. The
+    description is the only attacker-authored prose in the row and auto-merge
+    publishes it unreviewed, so the auto path additionally requires plain
+    text — no links, images, HTML, or code spans. Anything fancier waits for
+    a maintainer."""
+    if stars < AUTO_MERGE_STARS:
+        return False
+    return not re.search(r"https?://|!\[|\]\(|[<>`]", description or "")
+
+
+def _write_github_output(**kv):
+    """Append key=value outputs for the calling workflow step; no-op locally."""
+    path = os.environ.get("GITHUB_OUTPUT")
+    if not path:
+        return
+    with open(path, "a") as f:
+        for k, v in kv.items():
+            f.write(f"{k}={v}\n")
 
 
 # --- Markdown table operations ----------------------------------------------------
@@ -428,7 +456,8 @@ def cmd_add_collection(issue_body_file):
     table = fields.get("Table")
     owner, repo = parse_repo_url(url)  # rejects non-GitHub URLs before any fetch
     owner_repo = f"{owner}/{repo}"
-    ensure_repo_exists(owner_repo)
+    repo_data = ensure_repo_exists(owner_repo)
+    description = None
     if table == "Collections":
         description = fields.get("Description")
         if not description:
@@ -446,7 +475,10 @@ def cmd_add_collection(issue_body_file):
     text = open(README).read()
     new_text = insert_collection_row(text, table, row, name)
     open(README, "w").write(new_text)
-    print(f"added: {name} -> {table}")
+    stars = repo_data.get("stargazers_count") or 0
+    automerge = automerge_eligible(stars, description)
+    _write_github_output(stars=stars, automerge=str(automerge).lower())
+    print(f"added: {name} -> {table} (stars={stars}, automerge={automerge})")
 
 
 def remeasure_text(text, registry, date, fetcher=None):
