@@ -128,13 +128,25 @@ jobs:
       # submissions only) — stars come from the GitHub API, and the free-text
       # description must be plain prose. Fresh PRs only: regenerated PRs
       # ('updated') keep whatever review state they had.
+      # Concurrent submissions race: the first merge moves main, and GitHub
+      # then rejects the others with "Base branch was modified" (and the
+      # GITHUB_TOKEN merge cannot trigger regenerate-submissions to rebuild
+      # them). Update the branch and retry; a real table conflict surfaces as
+      # a failure for a maintainer after the retries run out.
       - name: Auto-merge popular collection
         if: steps.pr.outputs.pull-request-operation == 'created' && steps.add.outputs.automerge == 'true'
         env:
           PR_URL: ${{ steps.pr.outputs.pull-request-url }}
           STARS: ${{ steps.add.outputs.stars }}
         run: |
-          gh pr merge "$PR_URL" --repo "$REPO" --squash
+          merged=false
+          for attempt in 1 2 3 4; do
+            if gh pr merge "$PR_URL" --repo "$REPO" --squash; then merged=true; break; fi
+            echo "merge attempt $attempt failed; updating branch and retrying"
+            gh pr update-branch "$PR_URL" --repo "$REPO" || true
+            sleep $((attempt * 10))
+          done
+          [ "$merged" = true ]
           gh issue comment "$ISSUE" --repo "$REPO" --body "Auto-merged $PR_URL — repository has $STARS stars (threshold: 1000)."
 
       - name: Comment on issue
@@ -147,4 +159,4 @@ jobs:
         if: failure()
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: gh issue comment "$ISSUE" --repo "$REPO" --body "Automation could not process this submission (bad URL, missing frontmatter, duplicate skill, or invalid field are the usual causes). A maintainer will take a look. [Run log]($RUN_URL)"
+        run: gh issue comment "$ISSUE" --repo "$REPO" --body "Automation could not process this submission (bad URL, missing frontmatter, duplicate entry, invalid field, or an auto-merge conflict are the usual causes). A maintainer will take a look. [Run log]($RUN_URL)"
