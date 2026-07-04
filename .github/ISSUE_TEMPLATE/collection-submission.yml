@@ -1,0 +1,42 @@
+name: Collection / registry submission
+description: Submit a skill collection or registry for the 📦 section. Automation infers the rest and opens a PR.
+title: "[Collection]: "
+labels: ["collection-submission"]
+body:
+  - type: input
+    id: repo-url
+    attributes:
+      label: Repository URL
+      description: GitHub repository of the collection or registry. Non-GitHub registries (standalone sites) need a manual PR instead — see CONTRIBUTING.md.
+      placeholder: https://github.com/owner/repo
+    validations:
+      required: true
+  - type: dropdown
+    id: table
+    attributes:
+      label: Table
+      description: Collections = repos bundling skills. Registries & lists = places to browse/discover skills.
+      options:
+        - Collections
+        - Registries & lists
+    validations:
+      required: true
+  - type: input
+    id: description
+    attributes:
+      label: Description
+      description: One-line description. Required for Collections; ignored for Registries & lists.
+      placeholder: Security-audit skills from Trail of Bits
+    validations:
+      required: false
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type (registries only)
+      description: Required for Registries & lists; ignored for Collections.
+      options:
+        - awesome-list
+        - registry
+        - marketplace
+    validations:
+      required: false

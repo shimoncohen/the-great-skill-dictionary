@@ -304,5 +304,140 @@ class TestRemeasureMissingCategory(unittest.TestCase):
         self.assertTrue(any(l.startswith("| alpha |") for l in out.splitlines()))
 
 
+SAMPLE_COLLECTIONS = """## 📦 Skill Collections & Registries
+
+Intro text.
+
+### Collections
+
+| Repo | Description | Stars | License | Link |
+| --- | --- | --- | --- | --- |
+| a/alpha | First | ![Stars](https://img.shields.io/github/stars/a/alpha?style=flat-square&label=%E2%AD%90) | MIT | [GitHub](https://github.com/a/alpha) |
+| z/zeta | Last | ![Stars](https://img.shields.io/github/stars/z/zeta?style=flat-square&label=%E2%AD%90) | MIT | [GitHub](https://github.com/z/zeta) |
+
+*Footnote.*
+
+### Registries & lists
+
+| Name | Type | Stars | Link |
+| --- | --- | --- | --- |
+| alist (a) | awesome-list | ![Stars](https://img.shields.io/github/stars/a/alist?style=flat-square&label=%E2%AD%90) | [GitHub](https://github.com/a/alist) |
+| WebHub | marketplace | — | [webhub.example](https://webhub.example/) |
+
+## Contributing
+"""
+
+
+class TestParseRepoUrl(unittest.TestCase):
+    def test_valid(self):
+        self.assertEqual(skill_row.parse_repo_url("https://github.com/owner/repo"), ("owner", "repo"))
+        self.assertEqual(skill_row.parse_repo_url("https://github.com/owner/repo/"), ("owner", "repo"))
+
+    def assert_rejected(self, url):
+        with self.assertRaises(ValueError):
+            skill_row.parse_repo_url(url)
+
+    def test_rejects_extra_path(self):
+        self.assert_rejected("https://github.com/o/r/tree/main")
+        self.assert_rejected("https://github.com/o")
+
+    def test_rejects_non_github(self):
+        self.assert_rejected("https://gitlab.com/o/r")
+        self.assert_rejected("https://github.com.evil.com/o/r")
+        self.assert_rejected("https://github.com@evil.com/o/r")
+
+    def test_rejects_http_query_fragment(self):
+        self.assert_rejected("http://github.com/o/r")
+        self.assert_rejected("https://github.com/o/r?tab=stars")
+        self.assert_rejected("https://github.com/o/r#readme")
+
+    def test_rejects_bad_names(self):
+        self.assert_rejected("https://github.com/o/r.git")
+        self.assert_rejected("https://github.com/o/..")
+        self.assert_rejected("https://github.com/o?x/r")
+
+
+class TestStarsBadge(unittest.TestCase):
+    def test_badge(self):
+        self.assertEqual(
+            skill_row.stars_badge("o/r"),
+            "![Stars](https://img.shields.io/github/stars/o/r?style=flat-square&label=%E2%AD%90)",
+        )
+
+
+class TestBuildCollectionRows(unittest.TestCase):
+    def test_collection_row_shape(self):
+        row = skill_row.build_collection_row("o/r", "Does | things", "MIT")
+        self.assertEqual(
+            row,
+            "| o/r | Does \\| things "
+            "| ![Stars](https://img.shields.io/github/stars/o/r?style=flat-square&label=%E2%AD%90) "
+            "| MIT | [GitHub](https://github.com/o/r) |",
+        )
+
+    def test_registry_row_shape(self):
+        row = skill_row.build_registry_row("r (o)", "registry", "o/r")
+        self.assertEqual(
+            row,
+            "| r (o) | registry "
+            "| ![Stars](https://img.shields.io/github/stars/o/r?style=flat-square&label=%E2%AD%90) "
+            "| [GitHub](https://github.com/o/r) |",
+        )
+
+
+class TestInsertCollectionRow(unittest.TestCase):
+    def test_sorted_insert_collections(self):
+        row = skill_row.build_collection_row("m/mid", "Mid", "MIT")
+        out = skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "m/mid")
+        section = out.split("### Collections")[1].split("### Registries")[0]
+        names = [l.split("|")[1].strip() for l in section.splitlines()
+                 if l.startswith("| ") and not l.startswith(("| Repo |", "| ---"))]
+        self.assertEqual(names, ["a/alpha", "m/mid", "z/zeta"])
+
+    def test_insert_does_not_leak_into_registries(self):
+        row = skill_row.build_collection_row("zz/last", "Last of all", "MIT")
+        out = skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "zz/last")
+        self.assertLess(out.find("| zz/last |"), out.find("### Registries & lists"))
+
+    def test_sorted_insert_registries(self):
+        row = skill_row.build_registry_row("blist (b)", "registry", "b/blist")
+        out = skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Registries & lists", row, "blist (b)")
+        section = out.split("### Registries & lists")[1].split("## Contributing")[0]
+        names = [l.split("|")[1].strip() for l in section.splitlines()
+                 if l.startswith("| ") and not l.startswith(("| Name |", "| ---"))]
+        self.assertEqual(names, ["alist (a)", "blist (b)", "WebHub"])
+
+    def test_duplicate_raises(self):
+        row = skill_row.build_collection_row("a/alpha", "Dup", "MIT")
+        with self.assertRaises(ValueError):
+            skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "a/alpha")
+
+    def test_duplicate_case_insensitive(self):
+        row = skill_row.build_collection_row("A/Alpha", "Dup", "MIT")
+        with self.assertRaises(ValueError):
+            skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "A/Alpha")
+
+    def test_unknown_table_raises(self):
+        with self.assertRaises(ValueError):
+            skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Nope", "| x |", "x")
+
+    def test_missing_heading_raises(self):
+        with self.assertRaises(ValueError):
+            skill_row.insert_collection_row("# Empty\n", "Collections", "| x |", "x")
+
+    def test_preserves_blank_lines_around_table(self):
+        row = skill_row.build_collection_row("m/mid", "Mid", "MIT")
+        out = skill_row.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "m/mid")
+        self.assertIn("*Footnote.*\n\n### Registries & lists", out)
+        self.assertEqual(out.replace(row + "\n", ""), SAMPLE_COLLECTIONS)
+
+
+class TestInsertRowPreservesBlankLines(unittest.TestCase):
+    def test_insert_is_pure_row_addition(self):
+        row = "| mid | M | auto | ✅ any | ~2k / ~60 | stable | MIT | [r](https://github.com/m/r) |"
+        out = skill_row.insert_row(SAMPLE_README, "🧪 Testing", row, "mid", "2026-08")
+        self.assertEqual(out.replace(row + "\n", ""), SAMPLE_README)
+
+
 if __name__ == "__main__":
     unittest.main()

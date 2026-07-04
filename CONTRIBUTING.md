@@ -26,7 +26,9 @@ Add a skill by opening a pull request that inserts one row into the right catego
 
 ## Collections & registries rows
 
-The 📦 Skill Collections & Registries tables are maintained by hand (the issue-form automation only adds skill rows). Both tables include a **Stars** column with a dynamic shields.io badge:
+Preferred: open a [Collection / registry submission issue](../../issues/new?template=collection-submission.yml) with the GitHub repo URL and target table — automation infers the rest (license, stars badge) and opens a PR, same flow as skills. Automation handles GitHub-hosted entries only; non-GitHub registries (standalone sites) need a manual PR.
+
+For manual PRs: both tables include a **Stars** column with a dynamic shields.io badge:
 
 ```markdown
 ![Stars](https://img.shields.io/github/stars/owner/repo?style=flat-square&label=%E2%AD%90)

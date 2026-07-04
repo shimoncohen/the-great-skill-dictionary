@@ -1,8 +1,9 @@
 """Skill dictionary automation: infer row fields from a SKILL.md and update README.md.
 
 Stdlib only. Commands:
-  add        --issue-body FILE --date YYYY-MM   (reads GitHub issue-form body)
-  remeasure  --date YYYY-MM                     (refresh costs from skill-sources.json)
+  add             --issue-body FILE --date YYYY-MM   (reads GitHub issue-form body)
+  add-collection  --issue-body FILE                  (collections/registries issue-form body)
+  remeasure       --date YYYY-MM                     (refresh costs from skill-sources.json)
 """
 import json
 import os
@@ -30,6 +31,15 @@ CATEGORIES = {
 AGENT_CODES = {"✅ any", "CC", "CX", "GM", "CP"}
 MATURITIES = {"stable", "beta", "experimental", "archived"}
 TRIGGERS = {"auto", "manual", "always-on"}
+
+# Collections & registries tables (h3 sections under 📦), hand-shaped:
+# Collections:        | Repo | Description | Stars | License | Link |
+# Registries & lists: | Name | Type | Stars | Link |
+COLLECTION_HEADINGS = {
+    "Collections": "### Collections",
+    "Registries & lists": "### Registries & lists",
+}
+REGISTRY_TYPES = {"awesome-list", "registry", "marketplace"}
 
 _BLOCK_SCALAR_INDICATORS = {">", ">-", ">+", "|", "|-", "|+", ""}
 
@@ -141,6 +151,34 @@ def repo_web_url(url):
     return f"{owner}/{repo}", f"https://github.com/{owner}/{repo}/tree/{'/'.join(segments[:-1])}"
 
 
+def parse_repo_url(url):
+    """Validate an untrusted repository URL and return (owner, repo).
+
+    Accepts only https://github.com/<owner>/<repo> — exactly two path
+    segments, no query, fragment, or userinfo. Same charset rules as skill
+    URLs. Non-GitHub registries are out of scope for automation (manual PR).
+    Raises ValueError otherwise."""
+    parts = urlsplit(url)
+    if parts.scheme != "https" or parts.netloc != "github.com" or parts.query or parts.fragment:
+        raise ValueError(f"not a github.com repository URL: {url}")
+    segments = parts.path.strip("/").split("/")
+    if len(segments) != 2 or not all(segments):
+        raise ValueError(f"expected https://github.com/<owner>/<repo>: {url}")
+    owner, repo = segments
+    if not _OWNER_RE.match(owner):
+        raise ValueError(f"invalid owner in URL: {url}")
+    if not _REPO_RE.match(repo) or repo in (".", "..") or repo.endswith(".git"):
+        raise ValueError(f"invalid repository name in URL: {url}")
+    return owner, repo
+
+
+def stars_badge(owner_repo):
+    return (
+        f"![Stars](https://img.shields.io/github/stars/{owner_repo}"
+        "?style=flat-square&label=%E2%AD%90)"
+    )
+
+
 def parse_issue_body(body):
     fields = {}
     for m in re.finditer(r"^### (.+?)\n+(.*?)(?=\n### |\Z)", body, re.S | re.M):
@@ -196,7 +234,8 @@ def insert_row(text, category, row, name, date):
             PLACEHOLDER, f"{TABLE_HEADER}\n{row}\n\n{footnote}"
         )
     else:
-        lines = section.splitlines()
+        # split("\n") (not splitlines) so join round-trips blank lines exactly
+        lines = section.split("\n")
         rows = [i for i, l in enumerate(lines)
                 if l.startswith("| ") and not l.startswith("| Skill") and not l.startswith("| ---")]
         if not rows:
@@ -211,8 +250,6 @@ def insert_row(text, category, row, name, date):
         # measured, and only `remeasure` refreshes costs. Also keeps
         # concurrent submission PRs from all rewriting the same line.
         section = "\n".join(lines)
-        if not section.endswith("\n"):
-            section += "\n"
     return before + section + after
 
 
@@ -225,6 +262,52 @@ def build_row(name, description, trigger, agents, cost, maturity, license_id, re
         f"| {clean_cell(maturity)} | {clean_cell(license_id)} "
         f"| [{clean_cell(repo_name)}]({repo_url}) |"
     )
+
+
+def build_collection_row(owner_repo, description, license_id):
+    return (
+        f"| {clean_cell(owner_repo)} | {clean_cell(description)} "
+        f"| {stars_badge(owner_repo)} | {clean_cell(license_id)} "
+        f"| [GitHub](https://github.com/{owner_repo}) |"
+    )
+
+
+def build_registry_row(name, type_, owner_repo):
+    return (
+        f"| {clean_cell(name)} | {clean_cell(type_)} "
+        f"| {stars_badge(owner_repo)} "
+        f"| [GitHub](https://github.com/{owner_repo}) |"
+    )
+
+
+def insert_collection_row(text, table, row, name):
+    """Insert a row (sorted by first cell) into a Collections/Registries table."""
+    heading = COLLECTION_HEADINGS.get(table)
+    if heading is None:
+        raise ValueError(f"unknown table: {table}")
+    idx = text.find(heading + "\n")
+    if idx == -1:
+        raise ValueError(f"table heading not found in README: {heading}")
+    ends = [i for i in (text.find("\n### ", idx + len(heading)),
+                        text.find("\n## ", idx + len(heading))) if i != -1]
+    end = min(ends) + 1 if ends else len(text)
+    section = text[idx:end]
+    # split("\n") (not splitlines) so join round-trips blank lines exactly
+    lines = section.split("\n")
+    rows = [i for i, l in enumerate(lines)
+            if l.startswith("| ") and not l.startswith(("| Repo |", "| Name |", "| ---"))]
+    if not rows:
+        raise ValueError(f"no table found under: {heading}")
+    for i in rows:
+        if lines[i].split("|")[1].strip().lower() == name.lower():
+            raise ValueError(f"entry already listed: {name}")
+    pos = rows[-1] + 1
+    for i in rows:
+        if name.lower() < lines[i].split("|")[1].strip().lower():
+            pos = i
+            break
+    lines.insert(pos, row)
+    return text[:idx] + "\n".join(lines) + text[end:]
 
 
 def replace_cost_cell(row, new_cost):
@@ -291,6 +374,32 @@ def cmd_add(issue_body_file, date):
     print(f"added: {name} -> {category}")
 
 
+def cmd_add_collection(issue_body_file):
+    fields = parse_issue_body(open(issue_body_file).read())
+    url = (fields.get("Repository URL") or "").strip()
+    table = fields.get("Table")
+    owner, repo = parse_repo_url(url)  # rejects non-GitHub URLs before any fetch
+    owner_repo = f"{owner}/{repo}"
+    if table == "Collections":
+        description = fields.get("Description")
+        if not description:
+            raise ValueError("Collections entries require a description")
+        name = owner_repo
+        row = build_collection_row(owner_repo, description.rstrip("."), detect_license(owner_repo))
+    elif table == "Registries & lists":
+        type_ = fields.get("Type (registries only)")
+        if type_ not in REGISTRY_TYPES:
+            raise ValueError(f"unknown registry type: {type_}")
+        name = f"{repo} ({owner})"
+        row = build_registry_row(name, type_, owner_repo)
+    else:
+        raise ValueError(f"unknown table: {table}")
+    text = open(README).read()
+    new_text = insert_collection_row(text, table, row, name)
+    open(README, "w").write(new_text)
+    print(f"added: {name} -> {table}")
+
+
 def remeasure_text(text, registry, date, fetcher=None):
     fetcher = fetcher or fetch
     for name, meta in sorted(registry.items()):
@@ -343,6 +452,8 @@ def main(argv):
     args = dict(zip(argv[2::2], argv[3::2]))
     if argv[1] == "add":
         cmd_add(args["--issue-body"], args["--date"])
+    elif argv[1] == "add-collection":
+        cmd_add_collection(args["--issue-body"])
     elif argv[1] == "remeasure":
         cmd_remeasure(args["--date"])
     else:

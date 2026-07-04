@@ -1,4 +1,7 @@
 name: Skill submission
+# Handles both skill submissions (label: skill-submission) and collection/
+# registry submissions (label: collection-submission). The kind is derived
+# from the issue's labels and picks the script command and branch prefix.
 on:
   issues:
     types: [opened, labeled]
@@ -8,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       issue_number:
-        description: Issue number of the skill submission to (re)generate
+        description: Issue number of the submission to (re)generate
         required: true
 
 permissions:
@@ -18,7 +21,7 @@ permissions:
 
 jobs:
   add-skill:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.issue.labels.*.name, 'skill-submission')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.issue.labels.*.name, 'skill-submission') || contains(github.event.issue.labels.*.name, 'collection-submission')
     runs-on: ubuntu-latest
     concurrency:
       group: skill-submission-${{ github.event.issue.number || inputs.issue_number }}
@@ -27,7 +30,6 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       REPO: ${{ github.repository }}
       ISSUE: ${{ github.event.issue.number || inputs.issue_number }}
-      BRANCH: skill-submission/issue-${{ github.event.issue.number || inputs.issue_number }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
@@ -39,15 +41,18 @@ jobs:
         run: |
           data=$(gh api "repos/$REPO/issues/$ISSUE")
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            jq -e 'any(.labels[]; .name == "skill-submission")' <<<"$data" >/dev/null \
-              || { echo "issue #$ISSUE is not a skill submission"; exit 1; }
+            jq -e 'any(.labels[]; .name == "skill-submission" or .name == "collection-submission")' <<<"$data" >/dev/null \
+              || { echo "issue #$ISSUE is not a skill or collection submission"; exit 1; }
             jq -e '.state == "open"' <<<"$data" >/dev/null \
               || { echo "issue #$ISSUE is closed"; exit 1; }
           fi
+          kind=$(jq -r 'if any(.labels[]; .name == "collection-submission") then "collection" else "skill" end' <<<"$data")
           jq -r '.body // ""' <<<"$data" > /tmp/issue-body.md
           {
             echo "login=$(jq -r .user.login <<<"$data")"
             echo "uid=$(jq -r .user.id <<<"$data")"
+            echo "kind=$kind"
+            echo "branch=${kind}-submission/issue-$ISSUE"
           } >> "$GITHUB_OUTPUT"
 
       # Guard: never override an existing submission branch or open PR for this
@@ -55,6 +60,8 @@ jobs:
       - name: Check for existing submission branch or PR
         id: guard
         if: github.event_name == 'issues'
+        env:
+          BRANCH: ${{ steps.issue.outputs.branch }}
         run: |
           exists=false
           pr_url=$(gh pr list --repo "$REPO" --head "$BRANCH" --state open --json url --jq '.[0].url' || true)
@@ -68,6 +75,7 @@ jobs:
         if: steps.guard.outputs.exists == 'true'
         env:
           PR_URL: ${{ steps.guard.outputs.pr_url }}
+          BRANCH: ${{ steps.issue.outputs.branch }}
         run: |
           if [ -n "$PR_URL" ]; then
             gh issue comment "$ISSUE" --repo "$REPO" --body "A submission PR already exists for this issue: $PR_URL. Not overriding it. Close that PR first if you want automation to regenerate."
@@ -79,28 +87,34 @@ jobs:
         if: steps.guard.outputs.exists != 'true'
         run: python3 -m unittest tests.test_skill_row
 
-      - name: Add skill row
+      - name: Add row
         if: steps.guard.outputs.exists != 'true'
-        run: python3 scripts/skill_row.py add --issue-body /tmp/issue-body.md --date "$(date -u +%Y-%m)"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KIND: ${{ steps.issue.outputs.kind }}
+        run: |
+          if [ "$KIND" = "collection" ]; then
+            python3 scripts/skill_row.py add-collection --issue-body /tmp/issue-body.md
+          else
+            python3 scripts/skill_row.py add --issue-body /tmp/issue-body.md --date "$(date -u +%Y-%m)"
+          fi
 
       - name: Create or update pull request
         if: steps.guard.outputs.exists != 'true'
         id: pr
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
         with:
-          branch: ${{ env.BRANCH }}
+          branch: ${{ steps.issue.outputs.branch }}
           assignees: ${{ steps.issue.outputs.login }}
-          title: "Add skill from #${{ env.ISSUE }}"
+          title: "Add ${{ steps.issue.outputs.kind }} from #${{ env.ISSUE }}"
           author: ${{ steps.issue.outputs.login }} <${{ steps.issue.outputs.uid }}+${{ steps.issue.outputs.login }}@users.noreply.github.com>
           commit-message: |
-            Add skill from issue #${{ env.ISSUE }}
+            Add ${{ steps.issue.outputs.kind }} from issue #${{ env.ISSUE }}
 
             Co-authored-by: ${{ steps.issue.outputs.login }} <${{ steps.issue.outputs.uid }}+${{ steps.issue.outputs.login }}@users.noreply.github.com>
           body: |
-            Automated skill row for #${{ env.ISSUE }}.
-            Inferred: name, description, license, token costs. Review before merging.
+            Automated ${{ steps.issue.outputs.kind }} row for #${{ env.ISSUE }}.
+            Inferred fields (license; for skills also name, description, token costs). Review before merging.
 
             Closes #${{ env.ISSUE }}
           add-paths: |
