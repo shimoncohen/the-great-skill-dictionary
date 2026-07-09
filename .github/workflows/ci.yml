@@ -1,0 +1,21 @@
+name: CI
+# Always runs on every PR (no paths filter): this is the required status
+# check for the main ruleset / merge queue. A paths-filtered required check
+# would leave non-matching PRs unmergeable forever.
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Run tests
+        run: python3 -m unittest tests.test_dictionary
