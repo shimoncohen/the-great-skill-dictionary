@@ -448,7 +448,7 @@ def cmd_add(issue_body_file, date):
     registry = _load_sources()
     update_sources(registry, name, raw_url, category)
     _save_sources(registry)
-    _write_github_output(name=name)
+    _write_github_output(name=name, url=dir_url)
     print(f"added: {name} -> {category}")
 
 
@@ -479,7 +479,10 @@ def cmd_add_collection(issue_body_file):
     open(README, "w").write(new_text)
     stars = repo_data.get("stargazers_count") or 0
     automerge = automerge_eligible(stars, description)
-    _write_github_output(name=name, stars=stars, automerge=str(automerge).lower())
+    _write_github_output(
+        name=name, url=f"https://github.com/{owner_repo}",
+        stars=stars, automerge=str(automerge).lower(),
+    )
     print(f"added: {name} -> {table} (stars={stars}, automerge={automerge})")
 
 

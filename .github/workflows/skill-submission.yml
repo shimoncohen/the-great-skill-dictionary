@@ -133,6 +133,8 @@ jobs:
             Automated ${{ steps.issue.outputs.kind }} row for #${{ env.ISSUE }}.
             Inferred fields (license; for skills also name, description, token costs). Review before merging.
 
+            Source: ${{ steps.add.outputs.url }}
+
             Closes #${{ env.ISSUE }}
           add-paths: |
             README.md
