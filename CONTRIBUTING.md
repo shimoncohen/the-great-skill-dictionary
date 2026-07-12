@@ -12,7 +12,7 @@ Add a skill by opening a pull request that inserts one row into the right catego
 
 1. **One row per skill**, in the single best-fit category.
 2. **Alphabetical placement** by skill name within the table.
-3. **Columns, in order:** Skill · Description · Trigger · Agents · Cost ~(invoke / always-on) · Maturity · License · Repo.
+3. **Columns, in order:** Skill · Description · Trigger · Agents · Cost ~(invoke / always-on) · Maturity · License · Last edit · Repo.
 4. **Trigger:** `manual` (user runs a slash command) / `auto` (model activates it when relevant) / `always-on` (hook or system-level, active every turn).
 5. **Agents:** `✅ any` if the skill is plain portable markdown; otherwise list tested/restricted agents with legend codes separated by `·` (e.g. `CC · CX`).
 6. **Cost:** approximate token counts, `~` prefix mandatory, format `~<invoke> / ~<always-on>`.
@@ -21,6 +21,7 @@ Add a skill by opening a pull request that inserts one row into the right catego
    - Rough measure: `words × 1.3`. Example: `wc -w SKILL.md` → 1500 words ≈ `~2k`.
 7. **Maturity:** `stable` / `beta` / `experimental` / `archived` — your honest judgment from repo activity and docs.
 8. **License:** SPDX short form (`MIT`, `Apache-2.0`, …). Use `—` if unknown. If the code is public but not freely licensed, use `Source-available†` and make sure the category's footnote explains it.
+   **Last edit:** `YYYY-MM-DD` of the newest upstream commit touching the skill's directory (for collections/registries: the repo's last push). Use `—` if unknown — the monthly sweep fills and refreshes it automatically for GitHub-hosted entries.
 9. **As-of date:** when you add or re-measure costs in a table, update its `*Token counts approximate, measured as of YYYY-MM.*` footnote.
 10. **Empty categories:** when adding the first skill to an empty category, replace the placeholder line with the standard table header plus your row and the as-of footnote.
 
@@ -37,7 +38,7 @@ For manual PRs: both tables include a **Stars** column with a dynamic shields.io
 ```
 
 - Replace `owner/repo` with the entry's GitHub repository. The count updates automatically — never hard-code star numbers.
-- For entries not hosted on GitHub (e.g. standalone marketplaces), use `—` in the Stars cell.
+- For entries not hosted on GitHub (e.g. standalone marketplaces), use `—` in the Stars cell and the Last edit cell.
 
 ## Preferred: submit via issue form
 

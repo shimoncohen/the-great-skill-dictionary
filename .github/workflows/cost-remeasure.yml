@@ -1,4 +1,4 @@
-name: Monthly cost re-measure
+name: Monthly re-measure (costs + last edit)
 on:
   schedule:
     - cron: "17 4 1 * *"   # 04:17 UTC on the 1st of each month
@@ -17,7 +17,7 @@ jobs:
       - name: Run tests
         run: python3 -m unittest tests.test_dictionary
 
-      - name: Re-measure token costs
+      - name: Re-measure token costs and last-edit dates
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 scripts/dictionary.py remeasure --date "$(date -u +%Y-%m)"
@@ -28,9 +28,10 @@ jobs:
           # PAT so CI triggers on the PR (required check for the main ruleset)
           token: ${{ secrets.SUBMISSION_PAT }}
           branch: cost-remeasure
-          title: "chore: monthly token-cost re-measure"
-          commit-message: "chore: re-measure skill token costs"
+          title: "chore: monthly re-measure (token costs, last-edit dates)"
+          commit-message: "chore: re-measure token costs and last-edit dates"
           body: |
-            Automated monthly refresh of token counts for skills recorded in
-            `.github/skill-sources.json`. Review before merging.
+            Automated monthly refresh: token counts for skills recorded in
+            `.github/skill-sources.json`, and Last edit dates for every
+            skill/collection/registry row. Review before merging.
           add-paths: README.md

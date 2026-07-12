@@ -3,7 +3,8 @@
 Stdlib only. Commands:
   add             --issue-body FILE --date YYYY-MM   (reads GitHub issue-form body)
   add-collection  --issue-body FILE                  (collections/registries issue-form body)
-  remeasure       --date YYYY-MM                     (refresh costs from skill-sources.json)
+  remeasure       --date YYYY-MM                     (refresh costs from skill-sources.json
+                                                      and Last edit dates for all rows)
   check                                              (README links, local targets, category TOC)
 """
 import argparse
@@ -22,8 +23,8 @@ SOURCES = ".github/skill-sources.json"
 FOOTNOTE_RE = re.compile(r"\*Token counts approximate, measured as of \d{4}-\d{2}\.\*")
 PLACEHOLDER = "No skills catalogued yet — [contribute](#contributing)!"
 TABLE_HEADER = (
-    "| Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |\n"
-    "| --- | --- | --- | --- | --- | --- | --- | --- |"
+    "| Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Last edit | Repo |\n"
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"
 )
 
 CATEGORIES = {
@@ -38,8 +39,8 @@ MATURITIES = {"stable", "beta", "experimental", "archived"}
 TRIGGERS = {"auto", "manual", "always-on"}
 
 # Collections & registries tables (h3 sections under 📦), hand-shaped:
-# Collections:        | Repo | Description | Stars | License | Link |
-# Registries & lists: | Name | Type | Stars | Link |
+# Collections:        | Repo | Description | Stars | License | Last edit | Link |
+# Registries & lists: | Name | Type | Stars | Last edit | Link |
 COLLECTION_HEADINGS = {
     "Collections": "### Collections",
     "Registries & lists": "### Registries & lists",
@@ -262,6 +263,36 @@ def detect_license(owner_repo, fetcher=None):
     return spdx if spdx and spdx != "NOASSERTION" else "—"
 
 
+def last_edit_from_commits(owner_repo, ref=None, path=None, fetcher=None):
+    """Date (YYYY-MM-DD) of the newest commit touching `path` on `ref`.
+
+    Built only from already-validated URL parts (parse_skill_url charset), so
+    the query string needs no encoding. A 404 (bad ref) or 409 (empty repo)
+    reads as "no history" (—); other API failures propagate so workflows fail
+    visibly instead of minting a wrong date."""
+    fetcher = fetcher or fetch
+    url = f"https://api.github.com/repos/{owner_repo}/commits?per_page=1"
+    if ref:
+        url += f"&sha={ref}"
+    if path:
+        url += f"&path={path}"
+    try:
+        commits = json.loads(fetcher(url))
+    except urllib.error.HTTPError as e:
+        if e.code in (404, 409):
+            return "—"
+        raise
+    if not commits:
+        return "—"
+    return commits[0]["commit"]["committer"]["date"][:10]
+
+
+def last_edit_from_pushed_at(repo_data):
+    """Date (YYYY-MM-DD) a repo was last pushed to, from /repos metadata."""
+    pushed = (repo_data or {}).get("pushed_at")
+    return pushed[:10] if pushed else "—"
+
+
 def automerge_eligible(stars, description):
     """Whether a collection/registry PR may merge without maintainer review.
 
@@ -295,29 +326,32 @@ def stars_badge(owner_repo):
     )
 
 
-def build_row(name, description, trigger, agents, cost, maturity, license_id, repo_name, repo_url):
+def build_row(name, description, trigger, agents, cost, maturity, license_id, last_edit, repo_name, repo_url):
     if not repo_url.startswith("https://github.com/"):
         raise ValueError(f"repo URL must start with https://github.com/: {repo_url}")
     return (
         f"| {clean_cell(name)} | {clean_cell(description)} | {clean_cell(trigger)} "
         f"| {clean_cell(agents)} | {cost} "
         f"| {clean_cell(maturity)} | {clean_cell(license_id)} "
+        f"| {clean_cell(last_edit)} "
         f"| [{clean_cell(repo_name)}]({repo_url}) |"
     )
 
 
-def build_collection_row(owner_repo, description, license_id):
+def build_collection_row(owner_repo, description, license_id, last_edit):
     return (
         f"| {clean_cell(owner_repo)} | {clean_cell(description)} "
         f"| {stars_badge(owner_repo)} | {clean_cell(license_id)} "
+        f"| {clean_cell(last_edit)} "
         f"| [GitHub](https://github.com/{owner_repo}) |"
     )
 
 
-def build_registry_row(name, type_, owner_repo):
+def build_registry_row(name, type_, owner_repo, last_edit):
     return (
         f"| {clean_cell(name)} | {clean_cell(type_)} "
         f"| {stars_badge(owner_repo)} "
+        f"| {clean_cell(last_edit)} "
         f"| [GitHub](https://github.com/{owner_repo}) |"
     )
 
@@ -399,6 +433,56 @@ def replace_cost_cell(row, new_cost):
     return "|".join(cells)
 
 
+def replace_last_edit_cell(row, new_date):
+    """Last edit is always the second-to-last column. Indexing from the right
+    is immune to escaped pipes in description cells."""
+    cells = row.split("|")
+    cells[-3] = f" {new_date} "
+    return "|".join(cells)
+
+
+# Final-cell GitHub link of a row: [label](https://github.com/o/r[/tree/ref/path])
+_ROW_LINK_RE = re.compile(
+    r"\]\(https://github\.com/([A-Za-z0-9-]+/[A-Za-z0-9._-]+)(?:/tree/([^)\s]+))?\)"
+)
+
+
+def refresh_last_edits(text, fetcher=None):
+    """Refresh the Last edit cell of every row in every table that has the
+    column, using the row's own GitHub link: tree links (skills) get the date
+    of the newest commit touching that directory; bare repo links
+    (collections/registries) get the repo's pushed_at date. Rows without a
+    GitHub link, or whose lookup fails, are left unchanged."""
+    fetcher = fetcher or fetch
+    lines = text.split("\n")
+    in_table = False
+    for i, line in enumerate(lines):
+        if not line.startswith("|"):
+            in_table = False
+            continue
+        if "| Last edit |" in line:
+            in_table = True
+            continue
+        if not in_table or line.startswith("| ---"):
+            continue
+        m = _ROW_LINK_RE.search(line.split("|")[-2])
+        if not m:
+            continue
+        owner_repo, tree = m.group(1), m.group(2)
+        try:
+            if tree:
+                ref, _, path = tree.partition("/")
+                date = last_edit_from_commits(owner_repo, ref, path, fetcher=fetcher)
+            else:
+                date = last_edit_from_pushed_at(json.loads(
+                    fetcher(f"https://api.github.com/repos/{owner_repo}")))
+        except Exception as e:
+            print(f"skip (last-edit lookup failed): {owner_repo}: {e}", file=sys.stderr)
+            continue
+        lines[i] = replace_last_edit_cell(line, date)
+    return "\n".join(lines)
+
+
 # --- Sources registry (skill-sources.json) -----------------------------------------
 
 
@@ -437,10 +521,12 @@ def cmd_add(issue_body_file, date):
     fm = parse_frontmatter(skill_md)
     name = clean_cell(fm["name"])  # normalize once; row, dup check, and registry all use the same form
     cost = cost_cell(estimate_tokens(skill_md), estimate_tokens(fm["name"] + " " + fm["description"]))
+    _, _, segments = parse_skill_url(raw_url)
+    last_edit = last_edit_from_commits(owner_repo, segments[0], "/".join(segments[1:-1]))
     row = build_row(
         name, fm["description"].rstrip("."), trigger,
         agents_cell(fields["Agents tested"]), cost, fields["Maturity"],
-        detect_license(owner_repo), owner_repo, dir_url,
+        detect_license(owner_repo), last_edit, owner_repo, dir_url,
     )
     text = open(README).read()
     new_text = insert_row(text, category, row, name, date)
@@ -460,18 +546,19 @@ def cmd_add_collection(issue_body_file):
     owner_repo = f"{owner}/{repo}"
     repo_data = ensure_repo_exists(owner_repo)
     description = None
+    last_edit = last_edit_from_pushed_at(repo_data)
     if table == "Collections":
         description = fields.get("Description")
         if not description:
             raise ValueError("Collections entries require a description")
         name = owner_repo
-        row = build_collection_row(owner_repo, description.rstrip("."), detect_license(owner_repo))
+        row = build_collection_row(owner_repo, description.rstrip("."), detect_license(owner_repo), last_edit)
     elif table == "Registries & lists":
         type_ = fields.get("Type (registries only)")
         if type_ not in REGISTRY_TYPES:
             raise ValueError(f"unknown registry type: {type_}")
         name = f"{repo} ({owner})"
-        row = build_registry_row(name, type_, owner_repo)
+        row = build_registry_row(name, type_, owner_repo, last_edit)
     else:
         raise ValueError(f"unknown table: {table}")
     text = open(README).read()
@@ -525,11 +612,9 @@ def remeasure_text(text, registry, date, fetcher=None):
 
 def cmd_remeasure(date):
     registry = _load_sources()
-    if not registry:
-        print("no recorded sources; nothing to do")
-        return
     text = open(README).read()
-    new_text = remeasure_text(text, registry, date)
+    new_text = remeasure_text(text, registry, date) if registry else text
+    new_text = refresh_last_edits(new_text)
     if new_text != text:
         open(README, "w").write(new_text)
 
