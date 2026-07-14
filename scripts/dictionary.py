@@ -686,13 +686,31 @@ def check_readme_text(text, url_ok, file_exists):
 
 
 def _url_ok(url):
+    """True when a link is reachable, False only on a definitive-dead signal.
+
+    The check exists to catch dead skill/collection repos, so it must not fail
+    the build on transient noise: a rate limit (429), server outage (5xx), bot
+    block (401/403), or network timeout says nothing about whether the target
+    is gone. Only a 404/410 is a genuine "this link is dead". Everything else
+    is warned and treated as reachable, mirroring how the GitHub-API helpers
+    let outages propagate rather than minting a wrong verdict."""
     req = urllib.request.Request(url, headers={"User-Agent": "skill-dictionary-bot"})
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return 200 <= resp.status < 400
-    except Exception as e:
-        print(f"  {url}: {e}", file=sys.stderr)
-        return False
+    for attempt in range(2):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                return 200 <= resp.status < 400
+        except urllib.error.HTTPError as e:
+            if e.code in (404, 410):
+                print(f"  {url}: {e}", file=sys.stderr)
+                return False
+            # 429/5xx/403/etc: transient or bot-block, not proof of a dead link.
+            print(f"  {url}: {e} (transient, treated as reachable)", file=sys.stderr)
+            return True
+        except Exception as e:
+            if attempt == 0:
+                continue  # one retry for a flaky network before giving benefit of doubt
+            print(f"  {url}: {e} (unreachable, treated as reachable)", file=sys.stderr)
+            return True
 
 
 def cmd_check():

@@ -1,5 +1,6 @@
 import unittest
 import urllib.error
+from unittest import mock
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 import dictionary
@@ -652,6 +653,62 @@ class TestCheckReadme(unittest.TestCase):
     def test_missing_local_target_reported(self):
         problems = self._check(self.TEXT, file_exists=lambda p: False)
         self.assertEqual(problems, ["missing local link target: CONTRIBUTING.md"])
+
+
+class TestUrlOk(unittest.TestCase):
+    """_url_ok reports a link broken only on a definitive-dead signal; rate
+    limits, outages, bot blocks, and network flakes are treated as reachable
+    so the link check never fails a PR on transient noise."""
+
+    def _urlopen_raising(self, exc):
+        def _open(req, timeout=None):
+            raise exc
+        return _open
+
+    def _http_error(self, code):
+        return urllib.error.HTTPError("http://x", code, "err", {}, None)
+
+    def test_ok_status_reachable(self):
+        resp = mock.MagicMock(status=200)
+        resp.__enter__.return_value = resp
+        with mock.patch("urllib.request.urlopen", return_value=resp):
+            self.assertTrue(dictionary._url_ok("http://x"))
+
+    def test_404_is_broken(self):
+        with mock.patch("urllib.request.urlopen",
+                        self._urlopen_raising(self._http_error(404))):
+            self.assertFalse(dictionary._url_ok("http://x"))
+
+    def test_410_is_broken(self):
+        with mock.patch("urllib.request.urlopen",
+                        self._urlopen_raising(self._http_error(410))):
+            self.assertFalse(dictionary._url_ok("http://x"))
+
+    def test_429_is_reachable(self):
+        with mock.patch("urllib.request.urlopen",
+                        self._urlopen_raising(self._http_error(429))):
+            self.assertTrue(dictionary._url_ok("http://x"))
+
+    def test_503_is_reachable(self):
+        with mock.patch("urllib.request.urlopen",
+                        self._urlopen_raising(self._http_error(503))):
+            self.assertTrue(dictionary._url_ok("http://x"))
+
+    def test_403_bot_block_is_reachable(self):
+        with mock.patch("urllib.request.urlopen",
+                        self._urlopen_raising(self._http_error(403))):
+            self.assertTrue(dictionary._url_ok("http://x"))
+
+    def test_network_error_retried_then_reachable(self):
+        calls = []
+
+        def _open(req, timeout=None):
+            calls.append(1)
+            raise urllib.error.URLError("timeout")
+
+        with mock.patch("urllib.request.urlopen", _open):
+            self.assertTrue(dictionary._url_ok("http://x"))
+        self.assertEqual(len(calls), 2)  # one retry before giving benefit of doubt
 
 
 if __name__ == "__main__":
