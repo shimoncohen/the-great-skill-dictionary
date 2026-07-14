@@ -22,28 +22,38 @@ permissions:
   pull-requests: write
   issues: write
 
+# Per-issue group dedupes the opened+labeled event pair across BOTH jobs. Do
+# NOT try to serialize submissions with a single global group: GitHub keeps at
+# most ONE queued run per group and cancels the rest, so N>2 concurrent
+# submissions lose runs (observed live). Cross-submission merge races are
+# handled by GitHub native auto-merge in the submit job instead.
+concurrency:
+  group: skill-submission-${{ github.event.issue.number || inputs.issue_number }}
+  cancel-in-progress: true
+
 jobs:
-  add-skill:
+  # Gate job: resolve the issue, reject non-submissions on dispatch, and refuse
+  # to clobber an existing branch/PR on label events. Emits should_run so the
+  # submit job runs its happy path with ZERO per-step guards.
+  guard:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.issue.labels.*.name, 'skill-submission') || contains(github.event.issue.labels.*.name, 'collection-submission') || contains(github.event.issue.labels.*.name, 'plugin-submission')
     runs-on: ubuntu-latest
-    # Per-issue group dedupes the opened+labeled event pair. Do NOT try to
-    # serialize submissions with a single global group: GitHub keeps at most
-    # ONE queued run per group and cancels the rest, so N>2 concurrent
-    # submissions lose runs (observed live). Cross-submission merge races are
-    # handled by the retry loop in the auto-merge step instead.
-    concurrency:
-      group: skill-submission-${{ github.event.issue.number || inputs.issue_number }}
-      cancel-in-progress: true
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       REPO: ${{ github.repository }}
       ISSUE: ${{ github.event.issue.number || inputs.issue_number }}
+    outputs:
+      # dispatch always proceeds (regeneration); label events proceed only when
+      # no branch/PR exists yet. Guard step is skipped on dispatch, so its
+      # exists output is '' there — the dispatch disjunct carries should_run.
+      should_run: ${{ github.event_name == 'workflow_dispatch' || steps.guard.outputs.exists != 'true' }}
+      kind: ${{ steps.issue.outputs.kind }}
+      branch: ${{ steps.issue.outputs.branch }}
+      login: ${{ steps.issue.outputs.login }}
+      uid: ${{ steps.issue.outputs.uid }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      # SECURITY: the issue body is untrusted input. It is written to a file by
-      # jq (never shell-interpolated) and only ever parsed by dictionary.py —
-      # never eval'd. The resulting PR requires maintainer review before merge.
       - name: Resolve issue
         id: issue
         run: |
@@ -55,7 +65,6 @@ jobs:
               || { echo "issue #$ISSUE is closed"; exit 1; }
           fi
           kind=$(jq -r 'if any(.labels[]; .name == "collection-submission") then "collection" elif any(.labels[]; .name == "plugin-submission") then "plugin" else "skill" end' <<<"$data")
-          jq -r '.body // ""' <<<"$data" > /tmp/issue-body.md
           {
             echo "login=$(jq -r .user.login <<<"$data")"
             echo "uid=$(jq -r .user.id <<<"$data")"
@@ -91,49 +100,66 @@ jobs:
             gh issue comment "$ISSUE" --repo "$REPO" --body "A submission branch already exists for this issue. Not overriding it. Delete the branch \`$BRANCH\` first if you want automation to regenerate."
           fi
 
+      - name: Comment on failure
+        if: failure()
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: gh issue comment "$ISSUE" --repo "$REPO" --body "Automation could not process this submission (bad URL, missing frontmatter, duplicate entry, invalid field, or an auto-merge conflict are the usual causes). A maintainer will take a look. [Run log]($RUN_URL)"
+
+  # Happy path: no per-step exists guard, no event_name gate — the guard job
+  # decided. Re-fetches the issue body (guard needed only the API metadata;
+  # the body is re-fetched here rather than piped through a job output, which
+  # would drag untrusted issue text through the ${{ }} expression engine).
+  submit:
+    needs: guard
+    if: needs.guard.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+      ISSUE: ${{ github.event.issue.number || inputs.issue_number }}
+      KIND: ${{ needs.guard.outputs.kind }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      # SECURITY: the issue body is untrusted input. It is written to a file by
+      # gh/jq (never shell-interpolated) and only ever parsed by dictionary.py —
+      # never eval'd. The resulting PR requires maintainer review before merge.
+      - name: Fetch issue body
+        run: gh api "repos/$REPO/issues/$ISSUE" --jq '.body // ""' > /tmp/issue-body.md
+
       - name: Run tests
-        if: steps.guard.outputs.exists != 'true'
         run: python3 -m unittest tests.test_dictionary
 
       - name: Add row
-        if: steps.guard.outputs.exists != 'true'
         id: add
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          KIND: ${{ steps.issue.outputs.kind }}
-        run: |
-          if [ "$KIND" = "collection" ]; then
-            python3 scripts/dictionary.py add-collection --issue-body /tmp/issue-body.md
-          elif [ "$KIND" = "plugin" ]; then
-            python3 scripts/dictionary.py add-plugin --issue-body /tmp/issue-body.md
-          else
-            python3 scripts/dictionary.py add --issue-body /tmp/issue-body.md --date "$(date -u +%Y-%m)"
-          fi
+        run: python3 scripts/dictionary.py add --kind "$KIND" --issue-body /tmp/issue-body.md --date "$(date -u +%Y-%m)"
 
       # SUBMISSION_PAT (fine-grained, this repo only) instead of GITHUB_TOKEN:
       # PRs authored via the PAT trigger CI normally (required for the merge
       # queue) and avoid the GITHUB_TOKEN suppression quirks (checks parked
       # as action_required, Closes #N not firing, regenerate not dispatching).
       - name: Create or update pull request
-        if: steps.guard.outputs.exists != 'true'
         id: pr
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
         with:
           token: ${{ secrets.SUBMISSION_PAT }}
-          branch: ${{ steps.issue.outputs.branch }}
-          assignees: ${{ steps.issue.outputs.login }}
+          branch: ${{ needs.guard.outputs.branch }}
+          assignees: ${{ needs.guard.outputs.login }}
           # Conventional-commit title: GitHub's default squash subject is the
           # PR title, so maintainer-merged PRs stay commitlint-clean too.
-          title: "feat: add ${{ steps.issue.outputs.kind }} ${{ steps.add.outputs.name }}"
-          author: ${{ steps.issue.outputs.login }} <${{ steps.issue.outputs.uid }}+${{ steps.issue.outputs.login }}@users.noreply.github.com>
+          title: "feat: add ${{ needs.guard.outputs.kind }} ${{ steps.add.outputs.name }}"
+          author: ${{ needs.guard.outputs.login }} <${{ needs.guard.outputs.uid }}+${{ needs.guard.outputs.login }}@users.noreply.github.com>
           commit-message: |
-            feat: add ${{ steps.issue.outputs.kind }} ${{ steps.add.outputs.name }}
+            feat: add ${{ needs.guard.outputs.kind }} ${{ steps.add.outputs.name }}
 
             Generated from issue #${{ env.ISSUE }}.
 
-            Co-authored-by: ${{ steps.issue.outputs.login }} <${{ steps.issue.outputs.uid }}+${{ steps.issue.outputs.login }}@users.noreply.github.com>
+            Co-authored-by: ${{ needs.guard.outputs.login }} <${{ needs.guard.outputs.uid }}+${{ needs.guard.outputs.login }}@users.noreply.github.com>
           body: |
-            Automated ${{ steps.issue.outputs.kind }} row for #${{ env.ISSUE }}.
+            Automated ${{ needs.guard.outputs.kind }} row for #${{ env.ISSUE }}.
             Inferred fields (license; for skills also name, description, token costs). Review before merging.
 
             Source: ${{ steps.add.outputs.url }}
@@ -158,7 +184,6 @@ jobs:
           PR_URL: ${{ steps.pr.outputs.pull-request-url }}
           PR_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
           STARS: ${{ steps.add.outputs.stars }}
-          KIND: ${{ steps.issue.outputs.kind }}
           NAME: ${{ steps.add.outputs.name }}
         run: |
           gh pr merge "$PR_URL" --repo "$REPO" --auto --squash \
