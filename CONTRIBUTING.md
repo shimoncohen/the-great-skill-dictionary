@@ -29,6 +29,8 @@ Add a skill by opening a pull request that inserts one row into the right catego
 
 Preferred: open a [Collection / registry submission issue](../../issues/new?template=collection-submission.yml) with the GitHub repo URL and target table — automation infers the rest (license, stars badge) and opens a PR, same flow as skills. Automation handles GitHub-hosted entries only; non-GitHub registries (standalone sites) need a manual PR.
 
+Claude Code **plugin marketplaces** (repos with a `.claude-plugin/marketplace.json`) have their own [Plugin marketplace submission issue](../../issues/new?template=plugin-submission.yml) — give the repo URL and a one-line description; automation infers license and badges and opens a PR into the [Plugin marketplaces](README.md#plugin-marketplaces) table. Submit an individual skill from within a plugin as a Skill instead.
+
 PRs for repositories with **1000+ GitHub stars** merge automatically (star count checked server-side), provided the description is plain prose — no links, images, or HTML. Everything else waits for maintainer review. Skill submissions always get maintainer review regardless of stars.
 
 For manual PRs: both tables include a **Stars** column and a **Last edit** column, each with a dynamic shields.io badge:

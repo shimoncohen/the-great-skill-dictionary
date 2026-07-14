@@ -569,6 +569,20 @@ class TestInsertCollectionRow(unittest.TestCase):
                  if l.startswith("| ") and not l.startswith(("| Name |", "| ---"))]
         self.assertEqual(names, ["alist (a)", "blist (b)", "WebHub"])
 
+    def test_seeds_empty_table_after_separator(self):
+        empty = (
+            "## 📦 Skill Collections & Registries\n\n"
+            "### Plugin marketplaces\n\n"
+            "| Repo | Description | Stars | License | Last edit | Link |\n"
+            "| --- | --- | --- | --- | --- | --- |\n\n"
+            "## Contributing\n"
+        )
+        row = dictionary.build_collection_row("o/first", "First plugin", "MIT")
+        out = dictionary.insert_collection_row(empty, "Plugin marketplaces", row, "o/first")
+        self.assertIn("| --- | --- | --- | --- | --- | --- |\n| o/first |", out)
+        # blank line + next heading preserved, no row lost
+        self.assertIn("| [GitHub](https://github.com/o/first) |\n\n## Contributing", out)
+
     def test_duplicate_raises(self):
         row = dictionary.build_collection_row("a/alpha", "Dup", "MIT")
         with self.assertRaises(ValueError):

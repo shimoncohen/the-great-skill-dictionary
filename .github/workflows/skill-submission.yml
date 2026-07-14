@@ -1,9 +1,10 @@
 # Filename stays skill-submission.yml: regenerate-submissions.yml dispatches
 # this workflow by filename.
 name: Submission
-# Handles both skill submissions (label: skill-submission) and collection/
-# registry submissions (label: collection-submission). The kind is derived
-# from the issue's labels and picks the script command and branch prefix.
+# Handles skill submissions (label: skill-submission), collection/registry
+# submissions (label: collection-submission), and plugin-marketplace
+# submissions (label: plugin-submission). The kind is derived from the issue's
+# labels and picks the script command and branch prefix.
 on:
   issues:
     types: [opened, labeled]
@@ -23,7 +24,7 @@ permissions:
 
 jobs:
   add-skill:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.issue.labels.*.name, 'skill-submission') || contains(github.event.issue.labels.*.name, 'collection-submission')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.issue.labels.*.name, 'skill-submission') || contains(github.event.issue.labels.*.name, 'collection-submission') || contains(github.event.issue.labels.*.name, 'plugin-submission')
     runs-on: ubuntu-latest
     # Per-issue group dedupes the opened+labeled event pair. Do NOT try to
     # serialize submissions with a single global group: GitHub keeps at most
@@ -48,12 +49,12 @@ jobs:
         run: |
           data=$(gh api "repos/$REPO/issues/$ISSUE")
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            jq -e 'any(.labels[]; .name == "skill-submission" or .name == "collection-submission")' <<<"$data" >/dev/null \
-              || { echo "issue #$ISSUE is not a skill or collection submission"; exit 1; }
+            jq -e 'any(.labels[]; .name == "skill-submission" or .name == "collection-submission" or .name == "plugin-submission")' <<<"$data" >/dev/null \
+              || { echo "issue #$ISSUE is not a skill, collection, or plugin submission"; exit 1; }
             jq -e '.state == "open"' <<<"$data" >/dev/null \
               || { echo "issue #$ISSUE is closed"; exit 1; }
           fi
-          kind=$(jq -r 'if any(.labels[]; .name == "collection-submission") then "collection" else "skill" end' <<<"$data")
+          kind=$(jq -r 'if any(.labels[]; .name == "collection-submission") then "collection" elif any(.labels[]; .name == "plugin-submission") then "plugin" else "skill" end' <<<"$data")
           jq -r '.body // ""' <<<"$data" > /tmp/issue-body.md
           {
             echo "login=$(jq -r .user.login <<<"$data")"
@@ -103,6 +104,8 @@ jobs:
         run: |
           if [ "$KIND" = "collection" ]; then
             python3 scripts/dictionary.py add-collection --issue-body /tmp/issue-body.md
+          elif [ "$KIND" = "plugin" ]; then
+            python3 scripts/dictionary.py add-plugin --issue-body /tmp/issue-body.md
           else
             python3 scripts/dictionary.py add --issue-body /tmp/issue-body.md --date "$(date -u +%Y-%m)"
           fi
@@ -140,15 +143,15 @@ jobs:
             README.md
             .github/skill-sources.json
 
-      # Trust gate: `automerge` is computed by dictionary.py (collection
-      # submissions only) — stars come from the GitHub API, and the free-text
-      # description must be plain prose. Fresh PRs only: regenerated PRs
+      # Trust gate: `automerge` is computed by dictionary.py (collection and
+      # plugin submissions only) — stars come from the GitHub API, and the
+      # free-text description must be plain prose. Fresh PRs only: regenerated PRs
       # ('updated') keep whatever review state they had.
       # --auto arms GitHub native auto-merge (merge queue is org-only): the
       # PR merges as soon as required checks pass, and GitHub re-evaluates
       # mergeability itself when main moves — no retry loop. Uses the PAT so
       # the resulting push triggers workflows (e.g. regenerate-submissions).
-      - name: Arm auto-merge for popular collection
+      - name: Arm auto-merge for popular collection or plugin
         if: steps.pr.outputs.pull-request-operation == 'created' && steps.add.outputs.automerge == 'true'
         env:
           GH_TOKEN: ${{ secrets.SUBMISSION_PAT }}

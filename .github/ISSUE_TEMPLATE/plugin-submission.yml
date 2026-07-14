@@ -1,0 +1,24 @@
+name: Plugin marketplace submission
+description: Submit a Claude Code plugin marketplace for the 📦 section. Automation infers the rest and opens a PR.
+title: "[Plugin]: "
+labels: ["plugin-submission"]
+body:
+  - type: markdown
+    attributes:
+      value: For a marketplace repo that exposes a `.claude-plugin/marketplace.json`. Individual skills belong in a Skill submission instead.
+  - type: input
+    id: repo-url
+    attributes:
+      label: Repository URL
+      description: GitHub repository of the plugin marketplace. Non-GitHub hosts are rejected.
+      placeholder: https://github.com/owner/repo
+    validations:
+      required: true
+  - type: input
+    id: description
+    attributes:
+      label: Description
+      description: One-line description of what the marketplace bundles.
+      placeholder: Multi-harness agentic plugin marketplace for Claude Code
+    validations:
+      required: true

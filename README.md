@@ -207,7 +207,7 @@ Non-dev skills: marketing, product management, comms, and brand work.
 
 ## 📦 Skill Collections & Registries
 
-For further discovery and research. Skills found here are candidates for their own row in a category above once curated — these are places to browse for more.
+For further discovery and research. Skills found here are candidates for their own row in a category above once curated — these are places to browse for more. Includes [plugin marketplaces](#plugin-marketplaces) that bundle skills for one-command install in Claude Code.
 
 ### Collections
 
@@ -240,6 +240,15 @@ For further discovery and research. Skills found here are candidates for their o
 | skills.sh | registry | — | — | [skills.sh](https://www.skills.sh/) |
 | SkillsMP | registry | — | — | [skillsmp.com](https://skillsmp.com/) |
 
+### Plugin marketplaces
+
+Repos that expose a **Claude Code plugin marketplace** (a `.claude-plugin/marketplace.json`) — one `/plugin marketplace add owner/repo` installs a bundle of skills, commands, agents, and hooks together. Plugins are Claude Code-specific; the skills inside them are often portable and may also appear as their own rows above.
+
+| Repo | Description | Stars | License | Last edit | Link |
+| --- | --- | --- | --- | --- | --- |
+| ananddtyagi/claude-code-marketplace | Community-driven marketplace for Claude Code commands and plugins | ![Stars](https://img.shields.io/github/stars/ananddtyagi/claude-code-marketplace?style=flat-square&label=%E2%AD%90) | — | ![Last commit](https://img.shields.io/github/last-commit/ananddtyagi/claude-code-marketplace?style=flat-square&label=) | [GitHub](https://github.com/ananddtyagi/claude-code-marketplace) |
+| wshobson/agents | Multi-harness agentic plugin marketplace for Claude Code, Codex CLI, Cursor, OpenCode, GitHub Copilot, and Gemini CLI | ![Stars](https://img.shields.io/github/stars/wshobson/agents?style=flat-square&label=%E2%AD%90) | MIT | ![Last commit](https://img.shields.io/github/last-commit/wshobson/agents?style=flat-square&label=) | [GitHub](https://github.com/wshobson/agents) |
+
 ## Contributing
 
-Want to add a skill? Preferred: open a [Skill submission issue](../../issues/new?template=skill-submission.yml) — automation infers the details and opens a PR for review. Manual PRs also welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) for the row template and rules.
+Want to add a skill? Preferred: open a [Skill submission issue](../../issues/new?template=skill-submission.yml) — automation infers the details and opens a PR for review. Adding a [collection](../../issues/new?template=collection-submission.yml) or [plugin marketplace](../../issues/new?template=plugin-submission.yml) works the same way. Manual PRs also welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) for the row template and rules.
