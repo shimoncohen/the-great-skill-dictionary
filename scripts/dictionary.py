@@ -1,9 +1,8 @@
 """Skill dictionary automation: infer row fields from a SKILL.md and update README.md.
 
 Stdlib only. Commands:
-  add             --issue-body FILE --date YYYY-MM   (reads GitHub issue-form body)
-  add-collection  --issue-body FILE                  (collections/registries issue-form body)
-  add-plugin      --issue-body FILE                  (plugin-marketplace issue-form body)
+  add  --kind KIND --issue-body FILE --date YYYY-MM  (reads GitHub issue-form body;
+                                                      KIND: skill|collection|plugin)
   remeasure       --date YYYY-MM                     (refresh costs from skill-sources.json
                                                       and Last edit dates for skill rows)
   check                                              (README links, local targets, category TOC)
@@ -711,15 +710,13 @@ def main(argv):
     parser = argparse.ArgumentParser(prog="dictionary.py", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p_add = sub.add_parser("add", help="add a skill row from an issue-form body")
+    p_add = sub.add_parser("add", help="add a skill/collection/plugin row from an issue-form body")
+    p_add.add_argument("--kind", choices=["skill", "collection", "plugin"], default="skill",
+                       help="submission kind (derived from issue labels)")
     p_add.add_argument("--issue-body", required=True, help="file containing the issue body")
+    # Required for all kinds so the workflow can pass one command; collection
+    # and plugin rows ignore it (they have no as-of date column).
     p_add.add_argument("--date", required=True, help="as-of date, YYYY-MM")
-
-    p_coll = sub.add_parser("add-collection", help="add a collection/registry row from an issue-form body")
-    p_coll.add_argument("--issue-body", required=True, help="file containing the issue body")
-
-    p_plug = sub.add_parser("add-plugin", help="add a plugin-marketplace row from an issue-form body")
-    p_plug.add_argument("--issue-body", required=True, help="file containing the issue body")
 
     p_rem = sub.add_parser("remeasure", help="refresh token costs from skill-sources.json")
     p_rem.add_argument("--date", required=True, help="as-of date, YYYY-MM")
@@ -728,11 +725,12 @@ def main(argv):
 
     args = parser.parse_args(argv)
     if args.command == "add":
-        cmd_add(args.issue_body, args.date)
-    elif args.command == "add-collection":
-        cmd_add_collection(args.issue_body)
-    elif args.command == "add-plugin":
-        cmd_add_plugin(args.issue_body)
+        if args.kind == "collection":
+            cmd_add_collection(args.issue_body)
+        elif args.kind == "plugin":
+            cmd_add_plugin(args.issue_body)
+        else:
+            cmd_add(args.issue_body, args.date)
     elif args.command == "check":
         cmd_check()
     else:
