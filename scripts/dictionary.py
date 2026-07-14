@@ -4,7 +4,7 @@ Stdlib only. Commands:
   add             --issue-body FILE --date YYYY-MM   (reads GitHub issue-form body)
   add-collection  --issue-body FILE                  (collections/registries issue-form body)
   remeasure       --date YYYY-MM                     (refresh costs from skill-sources.json
-                                                      and Last edit dates for all rows)
+                                                      and Last edit dates for skill rows)
   check                                              (README links, local targets, category TOC)
 """
 import argparse
@@ -186,15 +186,22 @@ def parse_skill_url(url):
     return owner, repo, segments
 
 
-def to_raw_url(url):
-    owner, repo, segments = parse_skill_url(url)
+def _raw_url(owner, repo, segments):
     return f"https://raw.githubusercontent.com/{owner}/{repo}/{'/'.join(segments)}"
+
+
+def _dir_url(owner, repo, segments):
+    return f"https://github.com/{owner}/{repo}/tree/{'/'.join(segments[:-1])}"
+
+
+def to_raw_url(url):
+    return _raw_url(*parse_skill_url(url))
 
 
 def repo_web_url(url):
     """Return (owner/repo, web URL of the skill's directory)."""
     owner, repo, segments = parse_skill_url(url)
-    return f"{owner}/{repo}", f"https://github.com/{owner}/{repo}/tree/{'/'.join(segments[:-1])}"
+    return f"{owner}/{repo}", _dir_url(owner, repo, segments)
 
 
 def parse_repo_url(url):
@@ -287,12 +294,6 @@ def last_edit_from_commits(owner_repo, ref=None, path=None, fetcher=None):
     return commits[0]["commit"]["committer"]["date"][:10]
 
 
-def last_edit_from_pushed_at(repo_data):
-    """Date (YYYY-MM-DD) a repo was last pushed to, from /repos metadata."""
-    pushed = (repo_data or {}).get("pushed_at")
-    return pushed[:10] if pushed else "—"
-
-
 def automerge_eligible(stars, description):
     """Whether a collection/registry PR may merge without maintainer review.
 
@@ -326,6 +327,15 @@ def stars_badge(owner_repo):
     )
 
 
+def last_edit_badge(owner_repo):
+    """Dynamic last-commit badge (default branch) — always current, so
+    collection/registry rows need no sweep refresh."""
+    return (
+        f"![Last commit](https://img.shields.io/github/last-commit/{owner_repo}"
+        "?style=flat-square&label=)"
+    )
+
+
 def build_row(name, description, trigger, agents, cost, maturity, license_id, last_edit, repo_name, repo_url):
     if not repo_url.startswith("https://github.com/"):
         raise ValueError(f"repo URL must start with https://github.com/: {repo_url}")
@@ -338,20 +348,20 @@ def build_row(name, description, trigger, agents, cost, maturity, license_id, la
     )
 
 
-def build_collection_row(owner_repo, description, license_id, last_edit):
+def build_collection_row(owner_repo, description, license_id):
     return (
         f"| {clean_cell(owner_repo)} | {clean_cell(description)} "
         f"| {stars_badge(owner_repo)} | {clean_cell(license_id)} "
-        f"| {clean_cell(last_edit)} "
+        f"| {last_edit_badge(owner_repo)} "
         f"| [GitHub](https://github.com/{owner_repo}) |"
     )
 
 
-def build_registry_row(name, type_, owner_repo, last_edit):
+def build_registry_row(name, type_, owner_repo):
     return (
         f"| {clean_cell(name)} | {clean_cell(type_)} "
         f"| {stars_badge(owner_repo)} "
-        f"| {clean_cell(last_edit)} "
+        f"| {last_edit_badge(owner_repo)} "
         f"| [GitHub](https://github.com/{owner_repo}) |"
     )
 
@@ -441,18 +451,19 @@ def replace_last_edit_cell(row, new_date):
     return "|".join(cells)
 
 
-# Final-cell GitHub link of a row: [label](https://github.com/o/r[/tree/ref/path])
-_ROW_LINK_RE = re.compile(
-    r"\]\(https://github\.com/([A-Za-z0-9-]+/[A-Za-z0-9._-]+)(?:/tree/([^)\s]+))?\)"
+# Final-cell GitHub tree link of a skill row: [label](https://github.com/o/r/tree/ref/path)
+_ROW_TREE_LINK_RE = re.compile(
+    r"\]\(https://github\.com/([A-Za-z0-9-]+/[A-Za-z0-9._-]+)/tree/([^)\s]+)\)"
 )
 
 
 def refresh_last_edits(text, fetcher=None):
-    """Refresh the Last edit cell of every row in every table that has the
-    column, using the row's own GitHub link: tree links (skills) get the date
-    of the newest commit touching that directory; bare repo links
-    (collections/registries) get the repo's pushed_at date. Rows without a
-    GitHub link, or whose lookup fails, are left unchanged."""
+    """Refresh the Last edit cell of every skill row, using the row's own
+    GitHub tree link: the date of the newest commit touching that directory.
+    Collection/registry rows carry a self-updating last-commit badge and need
+    no refresh. Rows without a tree link, or whose lookup fails, are left
+    unchanged (URLError/ValueError/KeyError/TypeError cover API and response-
+    shape failures; anything else is a bug and should crash the run)."""
     fetcher = fetcher or fetch
     lines = text.split("\n")
     in_table = False
@@ -465,18 +476,14 @@ def refresh_last_edits(text, fetcher=None):
             continue
         if not in_table or line.startswith("| ---"):
             continue
-        m = _ROW_LINK_RE.search(line.split("|")[-2])
+        m = _ROW_TREE_LINK_RE.search(line.split("|")[-2])
         if not m:
             continue
         owner_repo, tree = m.group(1), m.group(2)
+        ref, _, path = tree.partition("/")
         try:
-            if tree:
-                ref, _, path = tree.partition("/")
-                date = last_edit_from_commits(owner_repo, ref, path, fetcher=fetcher)
-            else:
-                date = last_edit_from_pushed_at(json.loads(
-                    fetcher(f"https://api.github.com/repos/{owner_repo}")))
-        except Exception as e:
+            date = last_edit_from_commits(owner_repo, ref, path, fetcher=fetcher)
+        except (urllib.error.URLError, ValueError, KeyError, TypeError) as e:
             print(f"skip (last-edit lookup failed): {owner_repo}: {e}", file=sys.stderr)
             continue
         lines[i] = replace_last_edit_cell(line, date)
@@ -514,14 +521,15 @@ def cmd_add(issue_body_file, date):
     trigger_key = next((k for k in fields if k.startswith("Trigger")), None)
     trigger = fields.get(trigger_key) or "auto"
     validate_fields(category, fields["Agents tested"], fields["Maturity"], trigger)
-    raw_url = to_raw_url(url)  # parse_skill_url inside rejects non-GitHub URLs before any fetch
-    owner_repo, dir_url = repo_web_url(raw_url)
+    owner, repo, segments = parse_skill_url(url)  # rejects non-GitHub URLs before any fetch
+    owner_repo = f"{owner}/{repo}"
+    raw_url = _raw_url(owner, repo, segments)
+    dir_url = _dir_url(owner, repo, segments)
     ensure_repo_exists(owner_repo)
     skill_md = fetch(raw_url)
     fm = parse_frontmatter(skill_md)
     name = clean_cell(fm["name"])  # normalize once; row, dup check, and registry all use the same form
     cost = cost_cell(estimate_tokens(skill_md), estimate_tokens(fm["name"] + " " + fm["description"]))
-    _, _, segments = parse_skill_url(raw_url)
     last_edit = last_edit_from_commits(owner_repo, segments[0], "/".join(segments[1:-1]))
     row = build_row(
         name, fm["description"].rstrip("."), trigger,
@@ -546,19 +554,18 @@ def cmd_add_collection(issue_body_file):
     owner_repo = f"{owner}/{repo}"
     repo_data = ensure_repo_exists(owner_repo)
     description = None
-    last_edit = last_edit_from_pushed_at(repo_data)
     if table == "Collections":
         description = fields.get("Description")
         if not description:
             raise ValueError("Collections entries require a description")
         name = owner_repo
-        row = build_collection_row(owner_repo, description.rstrip("."), detect_license(owner_repo), last_edit)
+        row = build_collection_row(owner_repo, description.rstrip("."), detect_license(owner_repo))
     elif table == "Registries & lists":
         type_ = fields.get("Type (registries only)")
         if type_ not in REGISTRY_TYPES:
             raise ValueError(f"unknown registry type: {type_}")
         name = f"{repo} ({owner})"
-        row = build_registry_row(name, type_, owner_repo, last_edit)
+        row = build_registry_row(name, type_, owner_repo)
     else:
         raise ValueError(f"unknown table: {table}")
     text = open(README).read()

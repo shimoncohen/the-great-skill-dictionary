@@ -21,7 +21,7 @@ Add a skill by opening a pull request that inserts one row into the right catego
    - Rough measure: `words × 1.3`. Example: `wc -w SKILL.md` → 1500 words ≈ `~2k`.
 7. **Maturity:** `stable` / `beta` / `experimental` / `archived` — your honest judgment from repo activity and docs.
 8. **License:** SPDX short form (`MIT`, `Apache-2.0`, …). Use `—` if unknown. If the code is public but not freely licensed, use `Source-available†` and make sure the category's footnote explains it.
-   **Last edit:** `YYYY-MM-DD` of the newest upstream commit touching the skill's directory (for collections/registries: the repo's last push). Use `—` if unknown — the monthly sweep fills and refreshes it automatically for GitHub-hosted entries.
+   **Last edit:** `YYYY-MM-DD` of the newest upstream commit touching the skill's directory. Use `—` if unknown — the monthly sweep fills and refreshes it automatically for GitHub-hosted skills. Submit skill URLs from the default branch or a tag; branch names containing `/` can't be resolved and show `—`. (Collections/registries use a dynamic badge instead — see below.)
 9. **As-of date:** when you add or re-measure costs in a table, update its `*Token counts approximate, measured as of YYYY-MM.*` footnote.
 10. **Empty categories:** when adding the first skill to an empty category, replace the placeholder line with the standard table header plus your row and the as-of footnote.
 
@@ -31,13 +31,14 @@ Preferred: open a [Collection / registry submission issue](../../issues/new?temp
 
 PRs for repositories with **1000+ GitHub stars** merge automatically (star count checked server-side), provided the description is plain prose — no links, images, or HTML. Everything else waits for maintainer review. Skill submissions always get maintainer review regardless of stars.
 
-For manual PRs: both tables include a **Stars** column with a dynamic shields.io badge:
+For manual PRs: both tables include a **Stars** column and a **Last edit** column, each with a dynamic shields.io badge:
 
 ```markdown
 ![Stars](https://img.shields.io/github/stars/owner/repo?style=flat-square&label=%E2%AD%90)
+![Last commit](https://img.shields.io/github/last-commit/owner/repo?style=flat-square&label=)
 ```
 
-- Replace `owner/repo` with the entry's GitHub repository. The count updates automatically — never hard-code star numbers.
+- Replace `owner/repo` with the entry's GitHub repository. Both badges update automatically — never hard-code star counts or dates.
 - For entries not hosted on GitHub (e.g. standalone marketplaces), use `—` in the Stars cell and the Last edit cell.
 
 ## Preferred: submit via issue form

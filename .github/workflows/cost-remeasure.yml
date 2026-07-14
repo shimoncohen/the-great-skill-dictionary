@@ -32,6 +32,7 @@ jobs:
           commit-message: "chore: re-measure token costs and last-edit dates"
           body: |
             Automated monthly refresh: token counts for skills recorded in
-            `.github/skill-sources.json`, and Last edit dates for every
-            skill/collection/registry row. Review before merging.
+            `.github/skill-sources.json`, and Last edit dates for every skill
+            row (collections/registries carry self-updating badges).
+            Review before merging.
           add-paths: README.md

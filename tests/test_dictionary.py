@@ -314,8 +314,8 @@ Intro text.
 
 | Repo | Description | Stars | License | Last edit | Link |
 | --- | --- | --- | --- | --- | --- |
-| a/alpha | First | ![Stars](https://img.shields.io/github/stars/a/alpha?style=flat-square&label=%E2%AD%90) | MIT | 2026-01-05 | [GitHub](https://github.com/a/alpha) |
-| z/zeta | Last | ![Stars](https://img.shields.io/github/stars/z/zeta?style=flat-square&label=%E2%AD%90) | MIT | 2026-01-05 | [GitHub](https://github.com/z/zeta) |
+| a/alpha | First | ![Stars](https://img.shields.io/github/stars/a/alpha?style=flat-square&label=%E2%AD%90) | MIT | ![Last commit](https://img.shields.io/github/last-commit/a/alpha?style=flat-square&label=) | [GitHub](https://github.com/a/alpha) |
+| z/zeta | Last | ![Stars](https://img.shields.io/github/stars/z/zeta?style=flat-square&label=%E2%AD%90) | MIT | ![Last commit](https://img.shields.io/github/last-commit/z/zeta?style=flat-square&label=) | [GitHub](https://github.com/z/zeta) |
 
 *Footnote.*
 
@@ -323,7 +323,7 @@ Intro text.
 
 | Name | Type | Stars | Last edit | Link |
 | --- | --- | --- | --- | --- |
-| alist (a) | awesome-list | ![Stars](https://img.shields.io/github/stars/a/alist?style=flat-square&label=%E2%AD%90) | 2026-01-05 | [GitHub](https://github.com/a/alist) |
+| alist (a) | awesome-list | ![Stars](https://img.shields.io/github/stars/a/alist?style=flat-square&label=%E2%AD%90) | ![Last commit](https://img.shields.io/github/last-commit/a/alist?style=flat-square&label=) | [GitHub](https://github.com/a/alist) |
 | WebHub | marketplace | — | — | [webhub.example](https://webhub.example/) |
 
 ## Contributing
@@ -472,39 +472,26 @@ class TestLastEdit(unittest.TestCase):
         with self.assertRaises(urllib.error.HTTPError):
             dictionary.last_edit_from_commits("o/r", "main", "x", fetcher=fetcher)
 
-    def test_pushed_at(self):
-        self.assertEqual(dictionary.last_edit_from_pushed_at({"pushed_at": "2026-06-30T01:02:03Z"}), "2026-06-30")
-        self.assertEqual(dictionary.last_edit_from_pushed_at({"pushed_at": None}), "—")
-        self.assertEqual(dictionary.last_edit_from_pushed_at({}), "—")
-
-
 class TestRefreshLastEdits(unittest.TestCase):
     def fake_fetch(self, url):
-        if "/commits?" in url:
-            return '[{"commit": {"committer": {"date": "2026-07-08T00:00:00Z"}}}]'
-        return '{"pushed_at": "2026-07-09T00:00:00Z"}'
+        if "/commits?" not in url:
+            raise AssertionError(f"refresh should only hit the commits API, got: {url}")
+        return '[{"commit": {"committer": {"date": "2026-07-08T00:00:00Z"}}}]'
 
     def test_skill_row_uses_commit_date_of_tree_path(self):
         out = dictionary.refresh_last_edits(SAMPLE_README, fetcher=self.fake_fetch)
         row = next(l for l in out.splitlines() if l.startswith("| alpha |"))
         self.assertIn("| 2026-07-08 |", row)
 
-    def test_bare_repo_link_uses_pushed_at(self):
+    def test_bare_repo_link_skipped(self):
         out = dictionary.refresh_last_edits(SAMPLE_README, fetcher=self.fake_fetch)
         row = next(l for l in out.splitlines() if l.startswith("| zeta |"))
-        self.assertIn("| 2026-07-09 |", row)
+        self.assertIn("| 2026-01-05 |", row)
 
-    def test_collections_and_registries_updated(self):
+    def test_collections_and_registries_untouched(self):
+        # Their Last edit cells hold self-updating badges — no API calls, no edits.
         out = dictionary.refresh_last_edits(SAMPLE_COLLECTIONS, fetcher=self.fake_fetch)
-        self.assertIn("| a/alpha | First |", out)
-        for prefix in ("| a/alpha |", "| z/zeta |", "| alist (a) |"):
-            row = next(l for l in out.splitlines() if l.startswith(prefix))
-            self.assertIn("| 2026-07-09 |", row)
-
-    def test_non_github_row_untouched(self):
-        out = dictionary.refresh_last_edits(SAMPLE_COLLECTIONS, fetcher=self.fake_fetch)
-        row = next(l for l in out.splitlines() if l.startswith("| WebHub |"))
-        self.assertIn("| — |", row)
+        self.assertEqual(out, SAMPLE_COLLECTIONS)
 
     def test_lookup_failure_leaves_row_unchanged(self):
         def fetcher(u):
@@ -512,12 +499,15 @@ class TestRefreshLastEdits(unittest.TestCase):
         out = dictionary.refresh_last_edits(SAMPLE_README, fetcher=fetcher)
         self.assertEqual(out, SAMPLE_README)
 
+    def test_unexpected_errors_propagate(self):
+        def fetcher(u):
+            raise RuntimeError("bug, not an API failure")
+        with self.assertRaises(RuntimeError):
+            dictionary.refresh_last_edits(SAMPLE_README, fetcher=fetcher)
+
     def test_only_changes_last_edit_cells(self):
         out = dictionary.refresh_last_edits(SAMPLE_README, fetcher=self.fake_fetch)
-        self.assertEqual(
-            out.replace("| 2026-07-08 |", "| 2026-01-05 |").replace("| 2026-07-09 |", "| 2026-01-05 |"),
-            SAMPLE_README,
-        )
+        self.assertEqual(out.replace("| 2026-07-08 |", "| 2026-01-05 |"), SAMPLE_README)
 
 
 class TestStarsBadge(unittest.TestCase):
@@ -527,30 +517,39 @@ class TestStarsBadge(unittest.TestCase):
             "![Stars](https://img.shields.io/github/stars/o/r?style=flat-square&label=%E2%AD%90)",
         )
 
+    def test_last_edit_badge(self):
+        self.assertEqual(
+            dictionary.last_edit_badge("o/r"),
+            "![Last commit](https://img.shields.io/github/last-commit/o/r?style=flat-square&label=)",
+        )
+
 
 class TestBuildCollectionRows(unittest.TestCase):
     def test_collection_row_shape(self):
-        row = dictionary.build_collection_row("o/r", "Does | things", "MIT", "2026-07-11")
+        row = dictionary.build_collection_row("o/r", "Does | things", "MIT")
         self.assertEqual(
             row,
             "| o/r | Does \\| things "
             "| ![Stars](https://img.shields.io/github/stars/o/r?style=flat-square&label=%E2%AD%90) "
-            "| MIT | 2026-07-11 | [GitHub](https://github.com/o/r) |",
+            "| MIT "
+            "| ![Last commit](https://img.shields.io/github/last-commit/o/r?style=flat-square&label=) "
+            "| [GitHub](https://github.com/o/r) |",
         )
 
     def test_registry_row_shape(self):
-        row = dictionary.build_registry_row("r (o)", "registry", "o/r", "2026-07-11")
+        row = dictionary.build_registry_row("r (o)", "registry", "o/r")
         self.assertEqual(
             row,
             "| r (o) | registry "
             "| ![Stars](https://img.shields.io/github/stars/o/r?style=flat-square&label=%E2%AD%90) "
-            "| 2026-07-11 | [GitHub](https://github.com/o/r) |",
+            "| ![Last commit](https://img.shields.io/github/last-commit/o/r?style=flat-square&label=) "
+            "| [GitHub](https://github.com/o/r) |",
         )
 
 
 class TestInsertCollectionRow(unittest.TestCase):
     def test_sorted_insert_collections(self):
-        row = dictionary.build_collection_row("m/mid", "Mid", "MIT", "2026-07-11")
+        row = dictionary.build_collection_row("m/mid", "Mid", "MIT")
         out = dictionary.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "m/mid")
         section = out.split("### Collections")[1].split("### Registries")[0]
         names = [l.split("|")[1].strip() for l in section.splitlines()
@@ -558,12 +557,12 @@ class TestInsertCollectionRow(unittest.TestCase):
         self.assertEqual(names, ["a/alpha", "m/mid", "z/zeta"])
 
     def test_insert_does_not_leak_into_registries(self):
-        row = dictionary.build_collection_row("zz/last", "Last of all", "MIT", "2026-07-11")
+        row = dictionary.build_collection_row("zz/last", "Last of all", "MIT")
         out = dictionary.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "zz/last")
         self.assertLess(out.find("| zz/last |"), out.find("### Registries & lists"))
 
     def test_sorted_insert_registries(self):
-        row = dictionary.build_registry_row("blist (b)", "registry", "b/blist", "2026-07-11")
+        row = dictionary.build_registry_row("blist (b)", "registry", "b/blist")
         out = dictionary.insert_collection_row(SAMPLE_COLLECTIONS, "Registries & lists", row, "blist (b)")
         section = out.split("### Registries & lists")[1].split("## Contributing")[0]
         names = [l.split("|")[1].strip() for l in section.splitlines()
@@ -571,12 +570,12 @@ class TestInsertCollectionRow(unittest.TestCase):
         self.assertEqual(names, ["alist (a)", "blist (b)", "WebHub"])
 
     def test_duplicate_raises(self):
-        row = dictionary.build_collection_row("a/alpha", "Dup", "MIT", "2026-07-11")
+        row = dictionary.build_collection_row("a/alpha", "Dup", "MIT")
         with self.assertRaises(ValueError):
             dictionary.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "a/alpha")
 
     def test_duplicate_case_insensitive(self):
-        row = dictionary.build_collection_row("A/Alpha", "Dup", "MIT", "2026-07-11")
+        row = dictionary.build_collection_row("A/Alpha", "Dup", "MIT")
         with self.assertRaises(ValueError):
             dictionary.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "A/Alpha")
 
@@ -589,7 +588,7 @@ class TestInsertCollectionRow(unittest.TestCase):
             dictionary.insert_collection_row("# Empty\n", "Collections", "| x |", "x")
 
     def test_preserves_blank_lines_around_table(self):
-        row = dictionary.build_collection_row("m/mid", "Mid", "MIT", "2026-07-11")
+        row = dictionary.build_collection_row("m/mid", "Mid", "MIT")
         out = dictionary.insert_collection_row(SAMPLE_COLLECTIONS, "Collections", row, "m/mid")
         self.assertIn("*Footnote.*\n\n### Registries & lists", out)
         self.assertEqual(out.replace(row + "\n", ""), SAMPLE_COLLECTIONS)
