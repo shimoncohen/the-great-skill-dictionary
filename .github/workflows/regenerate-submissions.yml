@@ -28,7 +28,7 @@ jobs:
       - name: Dispatch regeneration for open submission PRs
         run: |
           gh pr list --repo "$REPO" --state open --json headRefName \
-            --jq '.[].headRefName | select(test("^(skill|collection)-submission/issue-[0-9]+$")) | sub("^(skill|collection)-submission/issue-"; "")' |
+            --jq '.[].headRefName | select(test("^(skill|collection|plugin)-submission/issue-[0-9]+$")) | sub("^(skill|collection|plugin)-submission/issue-"; "")' |
           while read -r issue; do
             echo "dispatching regeneration for issue #$issue"
             gh workflow run skill-submission.yml --repo "$REPO" -f issue_number="$issue"

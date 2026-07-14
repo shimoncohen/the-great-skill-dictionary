@@ -3,6 +3,7 @@
 Stdlib only. Commands:
   add             --issue-body FILE --date YYYY-MM   (reads GitHub issue-form body)
   add-collection  --issue-body FILE                  (collections/registries issue-form body)
+  add-plugin      --issue-body FILE                  (plugin-marketplace issue-form body)
   remeasure       --date YYYY-MM                     (refresh costs from skill-sources.json
                                                       and Last edit dates for skill rows)
   check                                              (README links, local targets, category TOC)
@@ -39,11 +40,13 @@ MATURITIES = {"stable", "beta", "experimental", "archived"}
 TRIGGERS = {"auto", "manual", "always-on"}
 
 # Collections & registries tables (h3 sections under 📦), hand-shaped:
-# Collections:        | Repo | Description | Stars | License | Last edit | Link |
-# Registries & lists: | Name | Type | Stars | Last edit | Link |
+# Collections:         | Repo | Description | Stars | License | Last edit | Link |
+# Registries & lists:  | Name | Type | Stars | Last edit | Link |
+# Plugin marketplaces: | Repo | Description | Stars | License | Last edit | Link |
 COLLECTION_HEADINGS = {
     "Collections": "### Collections",
     "Registries & lists": "### Registries & lists",
+    "Plugin marketplaces": "### Plugin marketplaces",
 }
 REGISTRY_TYPES = {"awesome-list", "registry", "marketplace"}
 
@@ -431,9 +434,15 @@ def insert_collection_row(text, table, row, name):
     lines = text[idx:end].split("\n")
     rows = [i for i, l in enumerate(lines)
             if l.startswith("| ") and not l.startswith(("| Repo |", "| Name |", "| ---"))]
-    if not rows:
-        raise ValueError(f"no table found under: {heading}")
-    _insert_sorted_row(lines, rows, name, row, "entry")
+    if rows:
+        _insert_sorted_row(lines, rows, name, row, "entry")
+    else:
+        # Empty table (header + separator, no data rows yet): seed the first
+        # row directly below the separator.
+        seps = [i for i, l in enumerate(lines) if l.startswith("| ---")]
+        if not seps:
+            raise ValueError(f"no table found under: {heading}")
+        lines.insert(seps[-1] + 1, row)
     return text[:idx] + "\n".join(lines) + text[end:]
 
 
@@ -580,6 +589,28 @@ def cmd_add_collection(issue_body_file):
     print(f"added: {name} -> {table} (stars={stars}, automerge={automerge})")
 
 
+def cmd_add_plugin(issue_body_file):
+    fields = parse_issue_body(open(issue_body_file).read())
+    url = (fields.get("Repository URL") or "").strip()
+    description = fields.get("Description")
+    owner, repo = parse_repo_url(url)  # rejects non-GitHub URLs before any fetch
+    owner_repo = f"{owner}/{repo}"
+    repo_data = ensure_repo_exists(owner_repo)
+    if not description:
+        raise ValueError("Plugin marketplace entries require a description")
+    row = build_collection_row(owner_repo, description.rstrip("."), detect_license(owner_repo))
+    text = open(README).read()
+    new_text = insert_collection_row(text, "Plugin marketplaces", row, owner_repo)
+    open(README, "w").write(new_text)
+    stars = repo_data.get("stargazers_count") or 0
+    automerge = automerge_eligible(stars, description)
+    _write_github_output(
+        name=owner_repo, url=f"https://github.com/{owner_repo}",
+        stars=stars, automerge=str(automerge).lower(),
+    )
+    print(f"added: {owner_repo} -> Plugin marketplaces (stars={stars}, automerge={automerge})")
+
+
 def remeasure_text(text, registry, date, fetcher=None):
     fetcher = fetcher or fetch
     for name, meta in sorted(registry.items()):
@@ -687,6 +718,9 @@ def main(argv):
     p_coll = sub.add_parser("add-collection", help="add a collection/registry row from an issue-form body")
     p_coll.add_argument("--issue-body", required=True, help="file containing the issue body")
 
+    p_plug = sub.add_parser("add-plugin", help="add a plugin-marketplace row from an issue-form body")
+    p_plug.add_argument("--issue-body", required=True, help="file containing the issue body")
+
     p_rem = sub.add_parser("remeasure", help="refresh token costs from skill-sources.json")
     p_rem.add_argument("--date", required=True, help="as-of date, YYYY-MM")
 
@@ -697,6 +731,8 @@ def main(argv):
         cmd_add(args.issue_body, args.date)
     elif args.command == "add-collection":
         cmd_add_collection(args.issue_body)
+    elif args.command == "add-plugin":
+        cmd_add_plugin(args.issue_body)
     elif args.command == "check":
         cmd_check()
     else:
