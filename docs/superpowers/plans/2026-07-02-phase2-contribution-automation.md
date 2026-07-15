@@ -185,7 +185,7 @@ import urllib.request
 README = "README.md"
 SOURCES = ".github/skill-sources.json"
 FOOTNOTE_RE = re.compile(r"\*Token counts approximate, measured as of \d{4}-\d{2}\.\*")
-PLACEHOLDER = "No skills catalogued yet — [contribute](#contributing)!"
+PLACEHOLDER = "No skills cataloged yet — [contribute](#contributing)!"
 TABLE_HEADER = (
     "| Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Repo |\n"
     "| --- | --- | --- | --- | --- | --- | --- | --- |"
@@ -390,7 +390,7 @@ Test authoring.
 
 Multi-source research.
 
-No skills catalogued yet — [contribute](#contributing)!
+No skills cataloged yet — [contribute](#contributing)!
 
 ## 📦 Skill Collections & Registries
 """
@@ -416,7 +416,7 @@ class TestInsertRow(unittest.TestCase):
         self.assertIn("| Skill | Description |", section)
         self.assertIn("| mid |", section)
         self.assertIn("measured as of 2026-08", section)
-        self.assertNotIn("No skills catalogued yet", section)
+        self.assertNotIn("No skills cataloged yet", section)
 
     def test_duplicate_name_raises(self):
         with self.assertRaises(ValueError):

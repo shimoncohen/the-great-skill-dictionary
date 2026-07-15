@@ -101,7 +101,7 @@ Column format for every table (8 columns):
 
 - Trigger values: `manual` / `auto` / `always-on`. Maturity: `stable` / `beta` / `experimental` / `archived`. Unknown license: `—`.
 - Every populated table ends with footnote: `*Token counts approximate, measured as of 2026-07.*`
-- Empty category placeholder line: `No skills catalogued yet — [contribute](#contributing)!`
+- Empty category placeholder line: `No skills cataloged yet — [contribute](#contributing)!`
 - Rows sorted alphabetically by skill name.
 
 - [ ] **Step 1: Append all 14 category sections**
@@ -200,13 +200,13 @@ APIs, MCP servers, and service integration.
 
 Persistent memory, knowledge graphs, and recall across sessions.
 
-No skills catalogued yet — [contribute](#contributing)!
+No skills cataloged yet — [contribute](#contributing)!
 
 ## ⚙️ Automation & Scheduling
 
 Recurring tasks, background workers, and scheduled agent runs.
 
-No skills catalogued yet — [contribute](#contributing)!
+No skills cataloged yet — [contribute](#contributing)!
 
 ## 🧩 Meta
 
@@ -224,7 +224,7 @@ Skills for making skills: skill/plugin/agent development and skill discovery.
 
 Multi-source research, fact-checking, and synthesis.
 
-No skills catalogued yet — [contribute](#contributing)!
+No skills cataloged yet — [contribute](#contributing)!
 
 ## 📄 Documents
 
@@ -258,7 +258,7 @@ Non-dev skills: marketing, product management, comms, and brand work.
 Run: `grep -c '^## ' README.md`
 Expected: `18` (4 header sections + 14 categories)
 
-Run: `grep -c 'No skills catalogued yet' README.md`
+Run: `grep -c 'No skills cataloged yet' README.md`
 Expected: `3`
 
 Run: `grep -c 'measured as of 2026-07' README.md`

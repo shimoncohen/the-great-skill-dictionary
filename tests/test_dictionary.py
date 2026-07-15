@@ -170,7 +170,7 @@ Test authoring.
 
 Multi-source research.
 
-No skills catalogued yet — [contribute](#contributing)!
+No skills cataloged yet — [contribute](#contributing)!
 
 ## 📦 Skill Collections & Registries
 """
@@ -198,7 +198,7 @@ class TestInsertRow(unittest.TestCase):
         self.assertIn("| Skill | Description |", section)
         self.assertIn("| mid |", section)
         self.assertIn("measured as of 2026-08", section)
-        self.assertNotIn("No skills catalogued yet", section)
+        self.assertNotIn("No skills cataloged yet", section)
 
     def test_duplicate_name_raises(self):
         with self.assertRaises(ValueError):

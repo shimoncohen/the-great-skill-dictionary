@@ -21,7 +21,7 @@ from urllib.parse import urlsplit
 README = "README.md"
 SOURCES = ".github/skill-sources.json"
 FOOTNOTE_RE = re.compile(r"\*Token counts approximate, measured as of \d{4}-\d{2}\.\*")
-PLACEHOLDER = "No skills catalogued yet — [contribute](#contributing)!"
+PLACEHOLDER = "No skills cataloged yet — [contribute](#contributing)!"
 TABLE_HEADER = (
     "| Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Last edit | Repo |\n"
     "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"

@@ -153,13 +153,13 @@ APIs, MCP servers, and service integration.
 
 Persistent memory, knowledge graphs, and recall across sessions.
 
-No skills catalogued yet — [contribute](#contributing)!
+No skills cataloged yet — [contribute](#contributing)!
 
 ## ⚙️ Automation & Scheduling
 
 Recurring tasks, background workers, and scheduled agent runs.
 
-No skills catalogued yet — [contribute](#contributing)!
+No skills cataloged yet — [contribute](#contributing)!
 
 ## 🧩 Meta
 
@@ -177,7 +177,7 @@ Skills for making skills: skill/plugin/agent development and skill discovery.
 
 Multi-source research, fact-checking, and synthesis.
 
-No skills catalogued yet — [contribute](#contributing)!
+No skills cataloged yet — [contribute](#contributing)!
 
 ## 📄 Documents
 

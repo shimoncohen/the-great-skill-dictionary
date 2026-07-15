@@ -41,7 +41,7 @@ A single hand-maintained `README.md` cataloguing agent skills (portable SKILL.md
    - 1–2 sentence category description
    - Table, rows sorted by name
    - Footnote: `*Token counts approximate, measured as of YYYY-MM.*`
-   - If empty: placeholder text `No skills catalogued yet — [contribute](#contributing)!`
+   - If empty: placeholder text `No skills cataloged yet — [contribute](#contributing)!`
 
 ## Table Columns
 
