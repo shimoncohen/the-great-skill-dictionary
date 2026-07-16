@@ -247,6 +247,7 @@ Repos that expose a **Claude Code plugin marketplace** (a `.claude-plugin/market
 | Repo | Description | Stars | License | Last edit | Link |
 | --- | --- | --- | --- | --- | --- |
 | ananddtyagi/claude-code-marketplace | Community-driven marketplace for Claude Code commands and plugins | ![Stars](https://img.shields.io/github/stars/ananddtyagi/claude-code-marketplace?style=flat-square&label=%E2%AD%90) | — | ![Last commit](https://img.shields.io/github/last-commit/ananddtyagi/claude-code-marketplace?style=flat-square&label=) | [GitHub](https://github.com/ananddtyagi/claude-code-marketplace) |
+| ruvnet/ruflo | Agent meta-harness marketplace — multi-agent swarms, adaptive memory, RAG, and coordination skills | ![Stars](https://img.shields.io/github/stars/ruvnet/ruflo?style=flat-square&label=%E2%AD%90) | MIT | ![Last commit](https://img.shields.io/github/last-commit/ruvnet/ruflo?style=flat-square&label=) | [GitHub](https://github.com/ruvnet/ruflo) |
 | wshobson/agents | Multi-harness agentic plugin marketplace for Claude Code, Codex CLI, Cursor, OpenCode, GitHub Copilot, and Gemini CLI | ![Stars](https://img.shields.io/github/stars/wshobson/agents?style=flat-square&label=%E2%AD%90) | MIT | ![Last commit](https://img.shields.io/github/last-commit/wshobson/agents?style=flat-square&label=) | [GitHub](https://github.com/wshobson/agents) |
 
 ## Contributing
