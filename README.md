@@ -81,6 +81,7 @@ Process discipline for day-to-day development: brainstorming, planning, TDD, deb
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | brainstorming | Turns ideas into validated designs through collaborative dialogue before any code | auto | ✅ any | ~2k / ~40 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
 | karpathy-guidelines | Behavioral guardrails against common LLM coding mistakes: overcomplication, non-surgical edits | auto | ✅ any | ~480 / ~40 | stable | — | 2026-04-20 | [andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) |
+| ponytail-lite | Single AGENTS.md that stops agents over-engineering — think like a lazy senior dev. Lite, plugin-free fork of ponytail | always-on | ✅ any | ~540 / ~540 | stable | MIT | 2026-06-28 | [ilindaniel/ponytail-lite](https://github.com/ilindaniel/ponytail-lite) |
 | systematic-debugging | Root-cause-first debugging discipline; forbids guess-and-check fixes | auto | ✅ any | ~2k / ~20 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
 | test-driven-development | Red-green-refactor loop enforcement for every feature and bugfix | auto | ✅ any | ~1.9k / ~20 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
 | writing-plans | Produces bite-sized, zero-context implementation plans from specs | auto | ✅ any | ~1.4k / ~20 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
