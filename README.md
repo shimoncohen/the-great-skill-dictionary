@@ -61,7 +61,7 @@ Directory conventions may change between agent versions — check your agent's d
 - [📄 Documents](#-documents)
 - [💼 Business & Productivity](#-business--productivity)
 
-Also see: [📦 Skill Collections & Registries](#-skill-collections--registries) · [Contributing](#contributing)
+Also see: [📦 Skill Collections, Registries & Plugins](#-skill-collections-registries--plugins) · [Contributing](#contributing)
 
 ## 🪙 Token Reduction
 
@@ -206,7 +206,7 @@ Non-dev skills: marketing, product management, comms, and brand work.
 
 *Token counts approximate, measured as of 2026-07.*
 
-## 📦 Skill Collections & Registries
+## 📦 Skill Collections, Registries & Plugins
 
 For further discovery and research. Skills found here are candidates for their own row in a category above once curated — these are places to browse for more. Includes [plugin marketplaces](#plugin-marketplaces) that bundle skills for one-command install in Claude Code.
 

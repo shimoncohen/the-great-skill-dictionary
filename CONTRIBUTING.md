@@ -25,7 +25,7 @@ Add a skill by opening a pull request that inserts one row into the right catego
 9. **As-of date:** when you add or re-measure costs in a table, update its `*Token counts approximate, measured as of YYYY-MM.*` footnote.
 10. **Empty categories:** when adding the first skill to an empty category, replace the placeholder line with the standard table header plus your row and the as-of footnote.
 
-## Collections & registries rows
+## Collections, registries & plugin rows
 
 Preferred: open a [Collection / registry submission issue](../../issues/new?template=collection-submission.yml) with the GitHub repo URL and target table — automation infers the rest (license, stars badge) and opens a PR, same flow as skills. Automation handles GitHub-hosted entries only; non-GitHub registries (standalone sites) need a manual PR.
 
