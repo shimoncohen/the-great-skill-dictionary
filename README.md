@@ -69,7 +69,7 @@ Skills that cut token usage — compressed communication styles, output trimming
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Last edit | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| caveman | Compressed replies, ~75% fewer output tokens, full technical accuracy kept | manual | ✅ any | ~880 / ~70 | stable | MIT | 2026-07-03 | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) |
+| caveman | Compressed replies, ~75% fewer output tokens, full technical accuracy kept | manual | ✅ any | ~910 / ~70 | stable | MIT | 2026-07-03 | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) |
 
 *Token counts approximate, measured as of 2026-07.*
 
