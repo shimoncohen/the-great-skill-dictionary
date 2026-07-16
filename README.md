@@ -106,6 +106,7 @@ Visual design quality, UI component work, and frontend best practices.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | frontend-design | Produces distinctive, production-grade frontend interfaces instead of generic AI styling | auto | ✅ any | ~1.7k / ~40 | stable | Apache-2.0 | 2026-06-09 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/frontend-design) |
 | react-best-practices | React and Next.js performance patterns from the Vercel team | auto | ✅ any | ~1.2k / ~60 | stable | MIT | 2026-04-14 | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices) |
+| slack-gif-creator | Knowledge and utilities for creating animated GIFs optimized for Slack. Provides constraints, validation tools, and animation concepts. Use when users request animated GIFs for Slack like "make me a GIF of X doing Y for Slack | auto | CC | ~1.4k / ~50 | stable | — | 2026-04-20 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/slack-gif-creator) |
 
 *Token counts approximate, measured as of 2026-07.*
 
