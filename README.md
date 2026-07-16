@@ -106,6 +106,7 @@ Visual design quality, UI component work, and frontend best practices.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | frontend-design | Produces distinctive, production-grade frontend interfaces instead of generic AI styling | auto | ✅ any | ~1.7k / ~40 | stable | Apache-2.0 | 2026-06-09 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/frontend-design) |
 | react-best-practices | React and Next.js performance patterns from the Vercel team | auto | ✅ any | ~1.2k / ~60 | stable | MIT | 2026-04-14 | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices) |
+| web-design-guidelines | Review UI code for Web Interface Guidelines compliance. Use when asked to "review my UI", "check accessibility", "audit design", "review UX", or "check my site against best practices" | auto | ✅ any | ~230 / ~40 | stable | — | 2026-01-16 | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills/tree/main/skills/web-design-guidelines) |
 
 *Token counts approximate, measured as of 2026-07.*
 
