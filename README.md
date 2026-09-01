@@ -69,9 +69,9 @@ Skills that cut token usage — compressed communication styles, output trimming
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Last edit | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| caveman | Compressed replies, ~75% fewer output tokens, full technical accuracy kept | manual | ✅ any | ~910 / ~70 | stable | MIT | 2026-07-03 | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) |
+| caveman | Compressed replies, ~75% fewer output tokens, full technical accuracy kept | manual | ✅ any | ~1.2k / ~40 | stable | MIT | 2026-07-03 | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) |
 
-*Token counts approximate, measured as of 2026-07.*
+*Token counts approximate, measured as of 2026-09.*
 
 ## 🛠️ Engineering Workflow
 
@@ -79,14 +79,14 @@ Process discipline for day-to-day development: brainstorming, planning, TDD, deb
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Last edit | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| brainstorming | Turns ideas into validated designs through collaborative dialogue before any code | auto | ✅ any | ~2k / ~40 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
+| brainstorming | Turns ideas into validated designs through collaborative dialogue before any code | auto | ✅ any | ~3k / ~40 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
 | karpathy-guidelines | Behavioral guardrails against common LLM coding mistakes: overcomplication, non-surgical edits | auto | ✅ any | ~480 / ~40 | stable | — | 2026-04-20 | [andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) |
 | ponytail-lite | Single AGENTS.md that stops agents over-engineering — think like a lazy senior dev. Lite, plugin-free fork of ponytail | always-on | ✅ any | ~540 / ~540 | stable | MIT | 2026-06-28 | [ilindaniel/ponytail-lite](https://github.com/ilindaniel/ponytail-lite) |
-| systematic-debugging | Root-cause-first debugging discipline; forbids guess-and-check fixes | auto | ✅ any | ~2k / ~20 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
-| test-driven-development | Red-green-refactor loop enforcement for every feature and bugfix | auto | ✅ any | ~1.9k / ~20 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
+| systematic-debugging | Root-cause-first debugging discipline; forbids guess-and-check fixes | auto | ✅ any | ~1.9k / ~20 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
+| test-driven-development | Red-green-refactor loop enforcement for every feature and bugfix | auto | ✅ any | ~1.8k / ~20 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
 | writing-plans | Produces bite-sized, zero-context implementation plans from specs | auto | ✅ any | ~1.4k / ~20 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
 
-*Token counts approximate, measured as of 2026-07.*
+*Token counts approximate, measured as of 2026-09.*
 
 ## 🧪 Testing
 
@@ -135,10 +135,10 @@ Auditing, vulnerability hunting, and secure-coding review.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Last edit | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| differential-review | Security-focused review of diffs: hunts vulnerabilities introduced by a change | auto | CC · CX | ~1.3k / ~50 | stable | CC-BY-SA-4.0 | 2026-06-05 | [trailofbits/skills](https://github.com/trailofbits/skills/tree/main/plugins/differential-review/skills/differential-review) |
-| semgrep | Authors and refines Semgrep static-analysis rules | auto | CC · CX | ~1.8k / ~90 | stable | CC-BY-SA-4.0 | 2026-06-05 | [trailofbits/skills](https://github.com/trailofbits/skills/tree/main/plugins/static-analysis/skills/semgrep) |
+| differential-review | Security-focused review of diffs: hunts vulnerabilities introduced by a change | auto | CC · CX | ~1.4k / ~100 | stable | CC-BY-SA-4.0 | 2026-08-26 | [trailofbits/skills](https://github.com/trailofbits/skills/tree/main/plugins/differential-review/skills/differential-review) |
+| semgrep | Authors and refines Semgrep static-analysis rules | auto | CC · CX | ~2.8k / ~140 | stable | CC-BY-SA-4.0 | 2026-08-31 | [trailofbits/skills](https://github.com/trailofbits/skills/tree/main/plugins/static-analysis/skills/semgrep) |
 
-*Token counts approximate, measured as of 2026-07.*
+*Token counts approximate, measured as of 2026-09.*
 
 ## 🔌 API & Integration
 
@@ -186,12 +186,12 @@ Creating and editing office documents: PDF, Word, PowerPoint, Excel.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Last edit | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| docx | Creates and edits Word documents with tracked changes | auto | CC | ~3.4k / ~150 | stable | Source-available† | 2026-02-25 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/docx) |
+| docx | Creates and edits Word documents with tracked changes | auto | CC | ~1.3k / ~160 | stable | Source-available† | 2026-07-17 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/docx) |
 | pdf | Generates and manipulates PDFs: forms, merging, extraction | auto | CC | ~1.3k / ~90 | stable | Source-available† | 2026-02-06 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/pdf) |
-| pptx | Creates and edits PowerPoint presentations | auto | CC | ~1.8k / ~140 | stable | Source-available† | 2026-02-06 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/pptx) |
-| xlsx | Creates and edits Excel spreadsheets with formulas | auto | CC | ~2.1k / ~200 | stable | Source-available† | 2026-02-06 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/xlsx) |
+| pptx | Creates and edits PowerPoint presentations | auto | CC | ~4.1k / ~160 | stable | Source-available† | 2026-07-17 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/pptx) |
+| xlsx | Creates and edits Excel spreadsheets with formulas | auto | CC | ~1.7k / ~200 | stable | Source-available† | 2026-07-17 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/xlsx) |
 
-*Token counts approximate, measured as of 2026-07.*
+*Token counts approximate, measured as of 2026-09.*
 
 †**Source-available, not open source:** code is visible on GitHub but licensed for use within Claude products only — not free to port to other agents or redistribute. "On GitHub" ≠ "free to use anywhere"; check the license before reuse.
 
