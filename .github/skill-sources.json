@@ -75,6 +75,10 @@
     "category": "🌐 Web Development",
     "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/web-artifacts-builder/SKILL.md"
   },
+  "web-design-guidelines": {
+    "category": "🎨 Design & Frontend",
+    "url": "https://raw.githubusercontent.com/vercel-labs/agent-skills/main/skills/web-design-guidelines/SKILL.md"
+  },
   "webapp-testing": {
     "category": "🧪 Testing",
     "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/webapp-testing/SKILL.md"
