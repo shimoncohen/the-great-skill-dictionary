@@ -63,6 +63,10 @@
     "category": "🧩 Meta",
     "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/skill-creator/SKILL.md"
   },
+  "slack-gif-creator": {
+    "category": "🎨 Design & Frontend",
+    "url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/slack-gif-creator/SKILL.md"
+  },
   "systematic-debugging": {
     "category": "🛠️ Engineering Workflow",
     "url": "https://raw.githubusercontent.com/obra/superpowers/main/skills/systematic-debugging/SKILL.md"
