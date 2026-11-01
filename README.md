@@ -69,9 +69,9 @@ Skills that cut token usage — compressed communication styles, output trimming
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Last edit | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| caveman | Compressed replies, ~75% fewer output tokens, full technical accuracy kept | manual | ✅ any | ~1.3k / ~40 | stable | MIT | 2026-07-03 | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) |
+| caveman | Compressed replies, ~75% fewer output tokens, full technical accuracy kept | manual | ✅ any | ~970 / ~40 | stable | MIT | 2026-07-03 | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) |
 
-*Token counts approximate, measured as of 2026-10.*
+*Token counts approximate, measured as of 2026-11.*
 
 ## 🛠️ Engineering Workflow
 
@@ -79,14 +79,14 @@ Process discipline for day-to-day development: brainstorming, planning, TDD, deb
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Last edit | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| brainstorming | Turns ideas into validated designs through collaborative dialogue before any code | auto | ✅ any | ~3.4k / ~40 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
+| brainstorming | Turns ideas into validated designs through collaborative dialogue before any code | auto | ✅ any | ~3.1k / ~40 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
 | karpathy-guidelines | Behavioral guardrails against common LLM coding mistakes: overcomplication, non-surgical edits | auto | ✅ any | ~480 / ~40 | stable | — | 2026-04-20 | [andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) |
 | ponytail-lite | Single AGENTS.md that stops agents over-engineering — think like a lazy senior dev. Lite, plugin-free fork of ponytail | always-on | ✅ any | ~540 / ~540 | stable | MIT | 2026-06-28 | [ilindaniel/ponytail-lite](https://github.com/ilindaniel/ponytail-lite) |
 | systematic-debugging | Root-cause-first debugging discipline; forbids guess-and-check fixes | auto | ✅ any | ~1.9k / ~20 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
 | test-driven-development | Red-green-refactor loop enforcement for every feature and bugfix | auto | ✅ any | ~1.9k / ~20 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
 | writing-plans | Produces bite-sized, zero-context implementation plans from specs | auto | ✅ any | ~2.1k / ~20 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
 
-*Token counts approximate, measured as of 2026-10.*
+*Token counts approximate, measured as of 2026-11.*
 
 ## 🧪 Testing
 
@@ -137,7 +137,7 @@ Auditing, vulnerability hunting, and secure-coding review.
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Last edit | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | differential-review | Security-focused review of diffs: hunts vulnerabilities introduced by a change | auto | CC · CX | ~1.4k / ~100 | stable | CC-BY-SA-4.0 | 2026-09-16 | [trailofbits/skills](https://github.com/trailofbits/skills/tree/main/plugins/differential-review/skills/differential-review) |
-| semgrep | Authors and refines Semgrep static-analysis rules | auto | CC · CX | ~2.8k / ~140 | stable | CC-BY-SA-4.0 | 2026-09-28 | [trailofbits/skills](https://github.com/trailofbits/skills/tree/main/plugins/static-analysis/skills/semgrep) |
+| semgrep | Authors and refines Semgrep static-analysis rules | auto | CC · CX | ~2.8k / ~140 | stable | CC-BY-SA-4.0 | 2026-10-23 | [trailofbits/skills](https://github.com/trailofbits/skills/tree/main/plugins/static-analysis/skills/semgrep) |
 
 *Token counts approximate, measured as of 2026-09.*
 
@@ -147,9 +147,9 @@ APIs, MCP servers, and service integration.
 
 | Skill | Description | Trigger | Agents | Cost ~(invoke / always-on) | Maturity | License | Last edit | Repo |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| mcp-builder | Guides building MCP servers in Python or TypeScript | auto | ✅ any | ~1.5k / ~50 | stable | Apache-2.0 | 2026-04-20 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/mcp-builder) |
+| mcp-builder | Guides building MCP servers in Python or TypeScript | auto | ✅ any | ~1.8k / ~50 | stable | Apache-2.0 | 2026-10-28 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/mcp-builder) |
 
-*Token counts approximate, measured as of 2026-07.*
+*Token counts approximate, measured as of 2026-11.*
 
 ## 🧠 Memory & Knowledge
 
@@ -171,9 +171,9 @@ Skills for making skills: skill/plugin/agent development and skill discovery.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | find-skills | Discovers and installs skills from the open ecosystem when you ask "how do I X" | auto | ✅ any | ~1.1k / ~70 | stable | MIT | 2026-07-10 | [vercel-labs/skills](https://github.com/vercel-labs/skills/tree/main/skills/find-skills) |
 | skill-creator | Guides creating, structuring, and packaging new skills | auto | ✅ any | ~6.8k / ~60 | stable | Apache-2.0 | 2026-04-20 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/skill-creator) |
-| writing-skills | Best practices for authoring and testing skills, TDD-style | auto | ✅ any | ~5k / ~20 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
+| writing-skills | Best practices for authoring and testing skills, TDD-style | auto | ✅ any | ~3.1k / ~20 | stable | MIT | 2026-07-10 | [obra/superpowers](https://github.com/obra/superpowers) |
 
-*Token counts approximate, measured as of 2026-10.*
+*Token counts approximate, measured as of 2026-11.*
 
 ## 🔍 Research
 
